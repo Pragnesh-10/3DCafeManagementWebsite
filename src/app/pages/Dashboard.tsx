@@ -95,8 +95,8 @@ export function Dashboard() {
               <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-bark-soft" /> Forecast</span>
             </div>
           </div>
-          <div className="p-4 sm:p-6 flex-1 min-h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="p-4 sm:p-6 w-full h-[300px]">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <AreaChart data={salesData} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
                 <defs key="defs">
                   <linearGradient id="fillActual" x1="0" y1="0" x2="0" y2="1">
@@ -120,8 +120,8 @@ export function Dashboard() {
           <Card>
             <h3 className="text-lg text-espresso">This week's demand</h3>
             <p className="text-sm text-bark mt-0.5 mb-4">Coffee vs. kitchen, units sold</p>
-            <div className="h-[180px]">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="w-full h-[180px]">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={demandData} margin={{ top: 4, right: 0, left: -20, bottom: 0 }} barGap={2}>
                   <CartesianGrid key="grid" strokeDasharray="2 5" stroke="#ddcfb8" vertical={false} />
                   <XAxis key="x" dataKey="day" stroke="#93826e" fontSize={11} tickLine={false} axisLine={false} />
