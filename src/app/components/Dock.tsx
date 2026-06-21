@@ -4,12 +4,12 @@ import { LayoutDashboard, Utensils, Package, Receipt, Users, UserSquare } from "
 import { LimelightNav, type NavItem } from "./ui/limelight-nav";
 
 const ROUTES = [
-  { path: "/", label: "Overview", Icon: LayoutDashboard },
-  { path: "/orders", label: "Orders", Icon: Utensils },
-  { path: "/inventory", label: "Inventory", Icon: Package },
-  { path: "/billing", label: "Billing", Icon: Receipt },
-  { path: "/employees", label: "Team", Icon: Users },
-  { path: "/customers", label: "Customers", Icon: UserSquare },
+  { path: "/admin", label: "Overview", Icon: LayoutDashboard },
+  { path: "/admin/orders", label: "Orders", Icon: Utensils },
+  { path: "/admin/inventory", label: "Inventory", Icon: Package },
+  { path: "/admin/billing", label: "Billing", Icon: Receipt },
+  { path: "/admin/employees", label: "Team", Icon: Users },
+  { path: "/admin/customers", label: "Customers", Icon: UserSquare },
 ];
 
 export function Dock() {

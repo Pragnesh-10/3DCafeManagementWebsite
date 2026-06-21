@@ -1,12 +1,13 @@
 import React from "react";
-import { Outlet, useLocation, Link } from "react-router";
+import { Outlet, useLocation, Link, useNavigate } from "react-router";
 import { Dock } from "./Dock";
 import { motion } from "motion/react";
-import { Bell, Search } from "lucide-react";
+import { Bell, Search, LogOut } from "lucide-react";
+import { toast } from "sonner";
 
 function Wordmark() {
   return (
-    <Link to="/" className="flex items-center gap-2.5 shrink-0">
+    <Link to="/admin" className="flex items-center gap-2.5 shrink-0">
       <span className="w-9 h-9 rounded-full bg-espresso text-cream flex items-center justify-center shrink-0 shadow-[0_2px_6px_-2px_rgba(44,33,24,0.5)]">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
           <ellipse cx="12" cy="12" rx="7.5" ry="10" transform="rotate(35 12 12)" stroke="currentColor" strokeWidth="1.6" />
@@ -27,6 +28,14 @@ function Wordmark() {
 
 export function Root() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("user_role");
+    localStorage.removeItem("user_name");
+    toast.success("Logged out successfully");
+    navigate("/login");
+  };
 
   return (
     <div className="flex flex-col h-screen bg-cream text-espresso overflow-hidden font-sans selection:bg-clay/20">
@@ -55,7 +64,7 @@ export function Root() {
             <span className="absolute top-2 right-2.5 w-1.5 h-1.5 bg-clay rounded-full" />
           </button>
           <div className="h-7 w-px bg-line mx-1.5" />
-          <button className="flex items-center gap-3 cursor-pointer pl-1.5 pr-3 py-1.5 rounded-full hover:bg-sand transition-colors">
+          <div className="flex items-center gap-3 pl-1.5 pr-1.5 py-1.5 rounded-full hover:bg-sand transition-colors group">
             <img
               src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&auto=format"
               alt="Priya Nair, café manager"
@@ -65,7 +74,14 @@ export function Root() {
               <p className="text-sm leading-tight text-espresso">Priya Nair</p>
               <p className="text-bark-soft text-xs leading-tight">Store Manager</p>
             </div>
-          </button>
+            <button 
+              onClick={handleLogout}
+              className="p-2 ml-1 text-bark-soft hover:text-clay transition-colors opacity-0 group-hover:opacity-100"
+              title="Logout"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
         </div>
       </header>
 

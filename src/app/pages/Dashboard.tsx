@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Card } from "../components/Card";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar,
@@ -42,6 +42,9 @@ const tooltipStyle = {
 } as const;
 
 export function Dashboard() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   return (
     <div className="space-y-7">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-3">
@@ -96,8 +99,9 @@ export function Dashboard() {
             </div>
           </div>
           <div className="p-4 sm:p-6 w-full h-[300px]">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-              <AreaChart data={salesData} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
+            {mounted && (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={salesData} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
                 <defs key="defs">
                   <linearGradient id="fillActual" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#b85c38" stopOpacity={0.28} />
@@ -112,6 +116,7 @@ export function Dashboard() {
                 <Area key="a2" type="monotone" dataKey="forecast" stroke="#93826e" strokeWidth={2} strokeDasharray="5 5" fill="transparent" name="Forecast" />
               </AreaChart>
             </ResponsiveContainer>
+            )}
           </div>
         </Card>
 
@@ -121,8 +126,9 @@ export function Dashboard() {
             <h3 className="text-lg text-espresso">This week's demand</h3>
             <p className="text-sm text-bark mt-0.5 mb-4">Coffee vs. kitchen, units sold</p>
             <div className="w-full h-[180px]">
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <BarChart data={demandData} margin={{ top: 4, right: 0, left: -20, bottom: 0 }} barGap={2}>
+              {mounted && (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={demandData} margin={{ top: 4, right: 0, left: -20, bottom: 0 }} barGap={2}>
                   <CartesianGrid key="grid" strokeDasharray="2 5" stroke="#ddcfb8" vertical={false} />
                   <XAxis key="x" dataKey="day" stroke="#93826e" fontSize={11} tickLine={false} axisLine={false} />
                   <Tooltip key="tt" cursor={{ fill: "#e7dcc9", opacity: 0.5 }} contentStyle={tooltipStyle} />
@@ -130,6 +136,7 @@ export function Dashboard() {
                   <Bar key="b2" dataKey="food" fill="#c0892f" radius={[3, 3, 0, 0]} name="Kitchen" />
                 </BarChart>
               </ResponsiveContainer>
+              )}
             </div>
           </Card>
 
