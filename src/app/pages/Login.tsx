@@ -86,7 +86,8 @@ export function Login() {
                 </div>
                 <div>
                   <h3 className="text-espresso font-semibold">Customer Portal</h3>
-                  <p className="text-xs text-bark-soft">Order your favorite brew & earn beans</p>
+                  <p className="text-xs text-bark-soft">Order your favourite brew &amp; earn beans</p>
+                  <p className="text-[10px] font-mono text-bark-soft/60 mt-1">hello@guest.com · guest123</p>
                 </div>
                 <ArrowRight className="ml-auto text-bark-soft group-hover:text-clay transition-colors" size={20} />
               </button>
@@ -101,6 +102,7 @@ export function Login() {
                 <div>
                   <h3 className="text-espresso font-semibold">Staff Dashboard</h3>
                   <p className="text-xs text-bark-soft">Manage roastery, orders, and team</p>
+                  <p className="text-[10px] font-mono text-bark-soft/60 mt-1">admin@cardamom.com · admin123</p>
                 </div>
                 <ArrowRight className="ml-auto text-bark-soft group-hover:text-espresso transition-colors" size={20} />
               </button>
