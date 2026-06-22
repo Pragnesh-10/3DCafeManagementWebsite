@@ -24,8 +24,8 @@ export function Login() {
     if (role === "admin") {
       // Mock admin credentials
       if (email === "admin@cardamom.com" && password === "admin123") {
-        localStorage.setItem("user_role", "admin");
-        localStorage.setItem("user_name", "Priya Nair");
+        sessionStorage.setItem("user_role", "admin");
+        sessionStorage.setItem("user_name", "Priya Nair");
         toast.success("Welcome back, Priya!");
         navigate("/admin");
       } else {
@@ -34,10 +34,10 @@ export function Login() {
     } else {
       // Mock customer credentials
       if (email === "hello@guest.com" && password === "guest123") {
-        localStorage.setItem("user_role", "customer");
-        localStorage.setItem("user_name", "Guest Explorer");
+        sessionStorage.setItem("user_role", "customer");
+        sessionStorage.setItem("user_name", "Guest Explorer");
         toast.success("Welcome to Cardamom!");
-        navigate("/customer");
+        navigate("/order");
       } else {
         toast.error("Invalid credentials. Use hello@guest.com / guest123");
       }

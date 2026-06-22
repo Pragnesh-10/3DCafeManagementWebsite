@@ -52,7 +52,7 @@ export function Landing() {
               From the high elevations of Chikmagalur to our roastery on Brigade Road. Experience the soul of South Indian coffee, reimagined with modern craft.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/login">
+              <Link to="/order">
                 <Button size="lg" className="rounded-full w-full sm:w-auto h-14 px-8">
                   Start Your Order <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>

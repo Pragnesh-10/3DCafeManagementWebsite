@@ -10,11 +10,12 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
 const MENU_ITEMS = [
-  { id: 1, name: "Caramel Macchiato", category: "Hot drinks", price: 360, image: "https://images.unsplash.com/photo-1593443320739-77f74939d0da?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
-  { id: 2, name: "Dark Espresso", category: "Hot drinks", price: 180, image: "https://images.unsplash.com/photo-1579992357154-faf4bde95b3d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
-  { id: 3, name: "Iced Cold Brew", category: "Cold drinks", price: 320, image: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
-  { id: 4, name: "Butter Croissant", category: "Pastries", price: 220, image: "https://images.unsplash.com/photo-1623334044303-241021148842?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
-  { id: 5, name: "Blueberry Muffin", category: "Pastries", price: 240, image: "https://images.unsplash.com/photo-1607958996333-41aef7caefaa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
+  { id: 1, name: "Flat White", category: "Hot drinks", price: 210, image: "https://images.unsplash.com/photo-1615485736894-a2d2e6d4cd9a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
+  { id: 2, name: "Cappuccino", category: "Hot drinks", price: 190, image: "https://images.unsplash.com/photo-1593443320739-77f74939d0da?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
+  { id: 3, name: "Pour Over", category: "Hot drinks", price: 240, image: "https://images.unsplash.com/photo-1522012188892-24beb302783d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
+  { id: 4, name: "Cinnamon Roll", category: "Pastries", price: 180, image: "https://images.unsplash.com/photo-1645995575875-ea6511c9d127?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
+  { id: 5, name: "Iced Latte", category: "Cold drinks", price: 230, image: "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
+  { id: 6, name: "Single-Origin Espresso", category: "Hot drinks", price: 160, image: "https://images.unsplash.com/photo-1610889556528-9a770e32642f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
 ];
 
 export function CustomerDashboard() {
@@ -24,8 +25,12 @@ export function CustomerDashboard() {
   const [cart, setCart] = useState<{ item: typeof MENU_ITEMS[0]; qty: number }[]>([]);
 
   const handleLogout = () => {
-    localStorage.removeItem("user_role");
-    localStorage.removeItem("user_name");
+    if (!sessionStorage.getItem("user_role")) {
+      navigate("/");
+      return;
+    }
+    sessionStorage.removeItem("user_role");
+    sessionStorage.removeItem("user_name");
     toast.success("Logged out successfully");
     navigate("/login");
   };
@@ -68,11 +73,19 @@ export function CustomerDashboard() {
 
         <div className="flex items-center gap-4">
           <div className="hidden sm:block text-right">
-            <p className="text-xs text-bark-soft uppercase tracking-widest leading-none">Guest Explorer</p>
-            <p className="text-[10px] text-clay font-bold uppercase tracking-[0.2em] mt-1">Bean Club Member</p>
+            <p className="text-xs text-bark-soft uppercase tracking-widest leading-none">
+              {sessionStorage.getItem("user_name") || "Guest Explorer"}
+            </p>
+            <p className="text-[10px] text-clay font-bold uppercase tracking-[0.2em] mt-1">
+              {sessionStorage.getItem("user_role") === "customer" ? "Bean Club Member" : "Casual Coffee Lover"}
+            </p>
           </div>
-          <button onClick={handleLogout} className="p-2 hover:bg-clay/10 rounded-full transition-colors text-bark hover:text-clay">
-            <LogOut size={18} />
+          <button 
+            onClick={handleLogout} 
+            className="p-2 hover:bg-clay/10 rounded-full transition-colors text-bark hover:text-clay"
+            title={sessionStorage.getItem("user_role") ? "Log Out" : "Return to Home"}
+          >
+            {sessionStorage.getItem("user_role") ? <LogOut size={18} /> : <ChevronLeft size={18} onClick={() => navigate("/")} />}
           </button>
         </div>
       </header>
@@ -88,20 +101,6 @@ export function CustomerDashboard() {
               className="flex-1 flex flex-col"
             >
               <CafeSpotlightHero onStart={() => setHasStarted(true)} />
-              <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="bg-clay/5 border-clay/10 p-6">
-                  <h3 className="text-clay font-semibold mb-2">Member Perk</h3>
-                  <p className="text-sm text-bark">Your next 3 orders earn double beans! Keep sipping, keep earning.</p>
-                </Card>
-                <Card className="bg-honey/5 border-honey/10 p-6">
-                  <h3 className="text-honey font-semibold mb-2">New Arrival</h3>
-                  <p className="text-sm text-bark">Try our limited edition Ethiopian Yirgacheffe, roasted to perfection.</p>
-                </Card>
-                <Card className="bg-espresso/5 border-line p-6">
-                  <h3 className="text-espresso font-semibold mb-2">Order History</h3>
-                  <p className="text-sm text-bark">Quickly reorder your favorites from your last visit.</p>
-                </Card>
-              </div>
             </motion.div>
           ) : (
             <motion.div

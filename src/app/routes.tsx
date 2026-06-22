@@ -10,10 +10,10 @@ import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
 import { CustomerDashboard } from "./pages/CustomerDashboard";
 
-// Simple Auth Guard
-const ProtectedRoute = ({ children, role }: { children: React.ReactNode, role: string }) => {
-  const userRole = localStorage.getItem("user_role");
-  if (userRole !== role) {
+// Auth Guard for Admin
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const userRole = sessionStorage.getItem("user_role");
+  if (userRole !== "admin") {
     return <Navigate to="/login" replace />;
   }
   return <>{children}</>;
@@ -29,65 +29,23 @@ export const router = createBrowserRouter([
     Component: Login,
   },
   {
-    path: "/customer",
-    element: (
-      <ProtectedRoute role="customer">
-        <CustomerDashboard />
-      </ProtectedRoute>
-    ),
+    path: "/order",
+    Component: CustomerDashboard, // Publicly accessible for "Start your order"
   },
   {
     path: "/admin",
-    Component: Root,
+    element: (
+      <AdminRoute>
+        <Root />
+      </AdminRoute>
+    ),
     children: [
-      { 
-        index: true, 
-        element: (
-          <ProtectedRoute role="admin">
-            <Dashboard />
-          </ProtectedRoute>
-        ) 
-      },
-      { 
-        path: "orders", 
-        element: (
-          <ProtectedRoute role="admin">
-            <Orders />
-          </ProtectedRoute>
-        ) 
-      },
-      { 
-        path: "inventory", 
-        element: (
-          <ProtectedRoute role="admin">
-            <Inventory />
-          </ProtectedRoute>
-        ) 
-      },
-      { 
-        path: "billing", 
-        element: (
-          <ProtectedRoute role="admin">
-            <Billing />
-          </ProtectedRoute>
-        ) 
-      },
-      { 
-        path: "employees", 
-        element: (
-          <ProtectedRoute role="admin">
-            <Employees />
-          </ProtectedRoute>
-        ) 
-      },
-      { 
-        path: "customers", 
-        element: (
-          <ProtectedRoute role="admin">
-            <Customers />
-          </ProtectedRoute>
-        ) 
-      },
+      { index: true, Component: Dashboard },
+      { path: "orders", Component: Orders },
+      { path: "inventory", Component: Inventory },
+      { path: "billing", Component: Billing },
+      { path: "employees", Component: Employees },
+      { path: "customers", Component: Customers },
     ],
   },
 ]);

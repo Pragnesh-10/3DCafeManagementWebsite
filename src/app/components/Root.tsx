@@ -31,8 +31,8 @@ export function Root() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem("user_role");
-    localStorage.removeItem("user_name");
+    sessionStorage.removeItem("user_role");
+    sessionStorage.removeItem("user_name");
     toast.success("Logged out successfully");
     navigate("/login");
   };

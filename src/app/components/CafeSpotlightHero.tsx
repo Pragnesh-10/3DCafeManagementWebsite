@@ -15,18 +15,13 @@ type CafeProduct = {
 
 // Café menu items used for the floating spotlight field.
 const sampleProducts: CafeProduct[] = [
-  // FEATURED (1–5) — these take the spotlight path to the centre
-  { id: 1, name: "Caramel Macchiato", price: "₹360", score: 96, image: "https://images.unsplash.com/photo-1593443320739-77f74939d0da?q=80&w=800&auto=format&fit=crop" },
-  { id: 2, name: "Single-Origin Espresso", price: "₹180", score: 94, image: "https://images.unsplash.com/photo-1579992357154-faf4bde95b3d?q=80&w=800&auto=format&fit=crop" },
-  { id: 3, name: "House Cold Brew", price: "₹320", score: 92, image: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?q=80&w=800&auto=format&fit=crop" },
-  { id: 4, name: "Butter Croissant", price: "₹220", score: 95, image: "https://images.unsplash.com/photo-1623334044303-241021148842?q=80&w=800&auto=format&fit=crop" },
-  { id: 5, name: "Blueberry Muffin", price: "₹240", score: 90, image: "https://images.unsplash.com/photo-1607958996333-41aef7caefaa?q=80&w=800&auto=format&fit=crop" },
-  // BACKGROUND (6–10) — gentle ambient floaters
-  { id: 6, name: "Flat White", price: "₹280", score: 93, image: "https://images.unsplash.com/photo-1561882468-9110e03e0f78?q=80&w=800&auto=format&fit=crop" },
-  { id: 7, name: "Cappuccino", price: "₹260", score: 91, image: "https://images.unsplash.com/photo-1572442388796-11668a67e53d?q=80&w=800&auto=format&fit=crop" },
-  { id: 8, name: "Pour Over", price: "₹300", score: 89, image: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=800&auto=format&fit=crop" },
-  { id: 9, name: "Cinnamon Roll", price: "₹230", score: 88, image: "https://images.unsplash.com/photo-1509365465985-25d11c17e812?q=80&w=800&auto=format&fit=crop" },
-  { id: 10, name: "Iced Latte", price: "₹290", score: 90, image: "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?q=80&w=800&auto=format&fit=crop" },
+  { id: 1, name: "Flat White", price: "₹210", score: 96, image: "https://images.unsplash.com/photo-1615485736894-a2d2e6d4cd9a?q=80&w=800&auto=format&fit=crop" },
+  { id: 2, name: "Cappuccino", price: "₹190", score: 94, image: "https://images.unsplash.com/photo-1593443320739-77f74939d0da?q=80&w=800&auto=format&fit=crop" },
+  { id: 3, name: "Pour Over", price: "₹240", score: 92, image: "https://images.unsplash.com/photo-1522012188892-24beb302783d?q=80&w=800&auto=format&fit=crop" },
+  { id: 4, name: "Cinnamon Roll", price: "₹180", score: 95, image: "https://images.unsplash.com/photo-1645995575875-ea6511c9d127?q=80&w=800&auto=format&fit=crop" },
+  { id: 5, name: "Iced Latte", price: "₹230", score: 90, image: "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?q=80&w=800&auto=format&fit=crop" },
+  { id: 6, name: "Single-Origin Espresso", price: "₹160", score: 93, image: "https://images.unsplash.com/photo-1610889556528-9a770e32642f?q=80&w=800&auto=format&fit=crop" },
+  { id: 7, name: "Double Espresso", price: "₹180", score: 91, image: "https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?q=80&w=800&auto=format&fit=crop" },
 ];
 
 const keyProducts = sampleProducts.slice(0, 5);
