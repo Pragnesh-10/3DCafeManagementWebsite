@@ -20,7 +20,7 @@ const MENU_ITEMS = [
 
 export function CustomerDashboard() {
   const navigate = useNavigate();
-  const [hasStarted, setHasStarted] = useState(false);
+  const [hasStarted, setHasStarted] = useState(true);
   const [activeCategory, setActiveCategory] = useState("All");
   const [cart, setCart] = useState<{ item: typeof MENU_ITEMS[0]; qty: number }[]>([]);
 
@@ -55,12 +55,7 @@ export function CustomerDashboard() {
       {/* Customer Header */}
       <header className="h-16 border-b border-line bg-cream px-6 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-4">
-          {hasStarted && (
-            <button onClick={() => setHasStarted(false)} className="p-2 hover:bg-sand rounded-full transition-colors text-bark-soft">
-              <ChevronLeft size={20} />
-            </button>
-          )}
-          <div className="flex items-center gap-2">
+<div className="flex items-center gap-2">
             <span className="w-7 h-7 rounded-full bg-espresso text-cream flex items-center justify-center">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                 <ellipse cx="12" cy="12" rx="7.5" ry="10" transform="rotate(35 12 12)" stroke="currentColor" strokeWidth="1.6" />
@@ -242,7 +237,6 @@ export function CustomerDashboard() {
                       onClick={() => {
                         toast.success("Order placed successfully! We'll notify you when it's ready.");
                         setCart([]);
-                        setHasStarted(false);
                       }}
                     >
                       <CreditCard size={20} /> Place Order
