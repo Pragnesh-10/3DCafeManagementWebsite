@@ -1,4 +1,6 @@
 import React, { useState, useRef, useLayoutEffect, cloneElement } from 'react';
+import { triggerHaptic } from '../../utils/haptics';
+
 
 const DefaultHomeIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>;
 const DefaultCompassIcon = (props: React.SVGProps<SVGSVGElement>) => <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" /></svg>;
@@ -65,6 +67,7 @@ export const LimelightNav = ({
   }
 
   const handleItemClick = (index: number, itemOnClick?: () => void) => {
+    triggerHaptic("medium");
     setActiveIndex(index);
     onTabChange?.(index);
     itemOnClick?.();
@@ -76,7 +79,7 @@ export const LimelightNav = ({
         <a
           key={id}
           ref={(el) => (navItemRefs.current[index] = el)}
-          className={`relative z-20 flex h-full cursor-pointer items-center justify-center p-5 ${iconContainerClassName}`}
+          className={`relative z-20 flex h-full cursor-pointer items-center justify-center py-5 px-3 sm:px-5 ${iconContainerClassName}`}
           onClick={() => handleItemClick(index, onClick)}
           aria-label={label}
         >

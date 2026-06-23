@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { Card } from "../components/Card";
-import { AlertTriangle, Package, RefreshCw, Plus, ArrowUp, ArrowDown, Minus } from "lucide-react";
+import { AlertTriangle, Package, RefreshCw, Plus, ArrowUp, ArrowDown, Minus, Loader2 } from "lucide-react";
 import { Button as NeonButton } from "../components/ui/neon-button";
+import { triggerHaptic } from "../utils/haptics";
+import { toast } from "sonner";
 
 const INVENTORY = [
   { id: "INV-001", item: "Espresso beans (house blend)", category: "Raw material", stock: "12 kg", status: "Good", trend: "down" },
@@ -20,7 +22,32 @@ const statusStyles: Record<string, string> = {
 
 export function Inventory() {
   const [query, setQuery] = useState("");
+  const [isSyncing, setIsSyncing] = useState(false);
   const rows = INVENTORY.filter((r) => r.item.toLowerCase().includes(query.toLowerCase()));
+
+  const handleSync = () => {
+    setIsSyncing(true);
+    triggerHaptic("medium");
+    setTimeout(() => {
+      setIsSyncing(false);
+      triggerHaptic("success");
+      toast.success("Inventory synchronized with local warehouse!");
+    }, 1100);
+  };
+
+  const handlePurchaseOrder = () => {
+    triggerHaptic("medium");
+    toast.success("Purchase order created", {
+      description: "Draft purchase order sent to supplier for approval."
+    });
+  };
+
+  const handleReorder = (item: string) => {
+    triggerHaptic("light");
+    toast.success(`Reorder request sent for ${item}`, {
+      description: "A replenishment ticket has been raised."
+    });
+  };
 
   return (
     <div className="space-y-7">
@@ -31,10 +58,10 @@ export function Inventory() {
           <p className="text-bark mt-1.5">What's on the shelf, and what needs reordering.</p>
         </div>
         <div className="flex gap-3">
-          <NeonButton variant="ghost">
-            <RefreshCw size={15} /> Sync
+          <NeonButton onClick={handleSync} variant="ghost" disabled={isSyncing} className="cursor-pointer">
+            {isSyncing ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />} Sync
           </NeonButton>
-          <NeonButton variant="solid">
+          <NeonButton onClick={handlePurchaseOrder} variant="solid" className="cursor-pointer">
             <Plus size={15} /> Purchase order
           </NeonButton>
         </div>
@@ -109,7 +136,12 @@ export function Inventory() {
                     <span className={`inline-flex px-2 py-0.5 rounded text-xs ${statusStyles[item.status]}`}>{item.status}</span>
                   </td>
                   <td className="px-5 py-3.5 text-right">
-                    <button className="text-clay hover:text-clay-dark text-sm transition-colors">Reorder</button>
+                    <button 
+                      onClick={() => handleReorder(item.item)}
+                      className="text-clay hover:text-clay-dark text-sm transition-colors cursor-pointer"
+                    >
+                      Reorder
+                    </button>
                   </td>
                 </tr>
               ))}

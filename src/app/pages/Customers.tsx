@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { Card } from "../components/Card";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
-import { Award, Star, History, ShoppingCart, Plus, Minus, Search, CreditCard, Coffee, Cake } from "lucide-react";
+import { Award, Star, History, ShoppingCart, Plus, Minus, Search, CreditCard, Coffee, Cake, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../utils/cn";
 import { Button as NeonButton } from "../components/ui/neon-button";
 import { CafeSpotlightHero } from "../components/CafeSpotlightHero";
+import { triggerHaptic } from "../utils/haptics";
+import { toast } from "sonner";
 
 type Mode = "people" | "order";
 
@@ -28,18 +30,37 @@ export function Customers() {
   const [hasStarted, setHasStarted] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All");
   const [cart, setCart] = useState<{ item: typeof MENU_ITEMS[0]; qty: number }[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const addToCart = (item: typeof MENU_ITEMS[0]) =>
+  const addToCart = (item: typeof MENU_ITEMS[0]) => {
+    triggerHaptic("light");
     setCart((prev) => {
       const existing = prev.find((i) => i.item.id === item.id);
       if (existing) return prev.map((i) => (i.item.id === item.id ? { ...i, qty: i.qty + 1 } : i));
       return [...prev, { item, qty: 1 }];
     });
+    toast.success(`${item.name} added to cart`, { duration: 1500 });
+  };
 
-  const updateQty = (id: number, delta: number) =>
+  const updateQty = (id: number, delta: number) => {
+    triggerHaptic("light");
     setCart((prev) =>
       prev.map((i) => (i.item.id === id ? { ...i, qty: Math.max(0, i.qty + delta) } : i)).filter((i) => i.qty > 0)
     );
+  };
+
+  const handleTakePayment = () => {
+    setIsProcessing(true);
+    triggerHaptic("medium");
+    setTimeout(() => {
+      setIsProcessing(false);
+      triggerHaptic("success");
+      toast.success(`Payment of ₹${(cartTotal + tax).toFixed(2)} received!`, {
+        description: "POS transaction finalized and printed successfully."
+      });
+      setCart([]);
+    }, 1500);
+  };
 
   const cartTotal = cart.reduce((s, { item, qty }) => s + item.price * qty, 0);
   const tax = +(cartTotal * 0.05).toFixed(2);
@@ -58,9 +79,12 @@ export function Customers() {
           {(["people", "order"] as Mode[]).map((m) => (
             <button
               key={m}
-              onClick={() => setMode(m)}
+              onClick={() => {
+                triggerHaptic("medium");
+                setMode(m);
+              }}
               className={cn(
-                "px-4 py-1.5 rounded-full text-sm transition-colors flex items-center gap-2",
+                "px-4 py-1.5 rounded-full text-sm transition-colors flex items-center gap-2 cursor-pointer",
                 mode === m ? "bg-espresso text-cream" : "text-bark hover:text-espresso"
               )}
             >
@@ -84,7 +108,7 @@ export function Customers() {
               <div className="w-12 h-12 rounded-full bg-clay/12 flex items-center justify-center text-clay mb-4"><Award size={24} /></div>
               <h3 className="text-2xl text-espresso">Bean Club</h3>
               <p className="text-sm text-bark mt-1 mb-5">428 members · 1 point per ₹20 spent</p>
-              <NeonButton variant="default" className="mt-auto w-full">
+              <NeonButton variant="default" className="mt-auto w-full cursor-pointer">
                 Manage rewards
               </NeonButton>
             </Card>
@@ -132,7 +156,7 @@ export function Customers() {
             exit={{ opacity: 0, y: -10 }}
             className="flex-1 min-h-0 overflow-y-auto custom-scrollbar"
           >
-            <CafeSpotlightHero onStart={() => setHasStarted(true)} />
+            <CafeSpotlightHero onStart={() => { triggerHaptic("medium"); setHasStarted(true); }} />
           </motion.div>
         ) : (
           <motion.div
@@ -148,9 +172,12 @@ export function Customers() {
                 {categories.map((cat) => (
                   <button
                     key={cat}
-                    onClick={() => setActiveCategory(cat)}
+                    onClick={() => {
+                      triggerHaptic("light");
+                      setActiveCategory(cat);
+                    }}
                     className={cn(
-                      "px-3.5 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors border",
+                      "px-3.5 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors border cursor-pointer",
                       activeCategory === cat ? "bg-espresso text-cream border-espresso" : "bg-paper border-line text-bark hover:text-espresso"
                     )}
                   >
@@ -167,7 +194,7 @@ export function Customers() {
                       whileTap={{ scale: 0.98 }}
                       onClick={() => addToCart(item)}
                       key={item.id}
-                      className="bg-paper border border-line rounded-[var(--radius)] overflow-hidden flex flex-col text-left group hover:border-clay/40 transition-colors shadow-[0_8px_24px_-16px_rgba(44,33,24,0.22)]"
+                      className="bg-paper border border-line rounded-[var(--radius)] overflow-hidden flex flex-col text-left group hover:border-clay/40 transition-colors shadow-[0_8px_24px_-16px_rgba(44,33,24,0.22)] cursor-pointer"
                     >
                       <div className="h-28 w-full relative overflow-hidden bg-sand">
                         <ImageWithFallback src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -237,8 +264,21 @@ export function Customers() {
                   <div className="flex justify-between text-bark"><span>GST (5%)</span><span className="font-mono">₹{tax}</span></div>
                   <div className="flex justify-between pt-2 border-t border-line text-espresso"><span>Total</span><span className="font-mono">₹{(cartTotal + tax).toFixed(2)}</span></div>
                 </div>
-                <NeonButton variant="solid" disabled={cart.length === 0} className="w-full py-3">
-                  <CreditCard size={17} /> Take payment
+                <NeonButton 
+                  variant="solid" 
+                  disabled={cart.length === 0 || isProcessing} 
+                  onClick={handleTakePayment}
+                  className="w-full py-3 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" /> Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard size={17} /> Take payment
+                    </>
+                  )}
                 </NeonButton>
               </div>
             </Card>

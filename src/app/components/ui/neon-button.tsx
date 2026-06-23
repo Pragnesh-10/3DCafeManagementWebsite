@@ -34,10 +34,24 @@ export interface ButtonProps
   neon?: boolean;
 }
 
+import { triggerHaptic } from '../../utils/haptics';
+
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, neon = true, size, variant, children, ...props }, ref) => {
+  ({ className, neon = true, size, variant, children, onClick, ...props }, ref) => {
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      triggerHaptic("light");
+      if (onClick) {
+        onClick(e);
+      }
+    };
+
     return (
-      <button className={cn(buttonVariants({ variant, size }), className)} ref={ref} {...props}>
+      <button 
+        className={cn(buttonVariants({ variant, size }), className)} 
+        ref={ref} 
+        onClick={handleClick}
+        {...props}
+      >
         <span
           className={cn(
             'absolute h-px opacity-0 group-hover:opacity-100 transition-all duration-500 ease-in-out inset-x-0 top-0 bg-gradient-to-r w-3/4 mx-auto from-transparent via-clay to-transparent hidden',

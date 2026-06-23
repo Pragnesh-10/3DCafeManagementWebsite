@@ -8,6 +8,7 @@ import { Card } from "../components/Card";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { triggerHaptic } from "../utils/haptics";
 
 const MENU_ITEMS = [
   { id: 1, name: "Flat White", category: "Hot drinks", price: 210, image: "https://images.unsplash.com/photo-1615485736894-a2d2e6d4cd9a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
@@ -27,8 +28,11 @@ export function CustomerDashboard() {
   const [notes, setNotes] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [cart, setCart] = useState<{ item: typeof MENU_ITEMS[0]; qty: number }[]>([]);
+  const [isBrewing, setIsBrewing] = useState(false);
+  const [brewingStep, setBrewingStep] = useState(0);
 
   const handleLogout = () => {
+    triggerHaptic("medium");
     if (!sessionStorage.getItem("user_role")) {
       navigate("/");
       return;
@@ -40,6 +44,7 @@ export function CustomerDashboard() {
   };
 
   const addToCart = (item: typeof MENU_ITEMS[0]) => {
+    triggerHaptic("light");
     setCart((prev) => {
       const existing = prev.find((i) => i.item.id === item.id);
       if (existing) return prev.map((i) => (i.item.id === item.id ? { ...i, qty: i.qty + 1 } : i));
@@ -48,10 +53,38 @@ export function CustomerDashboard() {
     toast.success(`${item.name} added`, { duration: 1500 });
   };
 
-  const updateQty = (id: number, delta: number) =>
+  const updateQty = (id: number, delta: number) => {
+    triggerHaptic("light");
     setCart((prev) =>
       prev.map((i) => (i.item.id === id ? { ...i, qty: Math.max(0, i.qty + delta) } : i)).filter((i) => i.qty > 0)
     );
+  };
+
+  const handlePlaceOrder = () => {
+    if (orderType === "Dine-in" && !tableNo.trim()) {
+      triggerHaptic("error");
+      toast.error("Enter your table number first");
+      return;
+    }
+
+    triggerHaptic("medium");
+    setIsBrewing(true);
+    setBrewingStep(0);
+
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      currentStep++;
+      if (currentStep < 4) {
+        setBrewingStep(currentStep);
+        triggerHaptic("light");
+      } else {
+        clearInterval(interval);
+        setIsBrewing(false);
+        setOrderPlaced(true);
+        triggerHaptic("success");
+      }
+    }, 700);
+  };
 
   const cartTotal = cart.reduce((s, { item, qty }) => s + item.price * qty, 0);
   const gst = +(cartTotal * 0.05).toFixed(2);
@@ -185,7 +218,10 @@ export function CustomerDashboard() {
                     {categories.map((cat) => (
                       <button
                         key={cat}
-                        onClick={() => setActiveCategory(cat)}
+                        onClick={() => {
+                          triggerHaptic("light");
+                          setActiveCategory(cat);
+                        }}
                         className={cn(
                           "px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border",
                           activeCategory === cat ? "bg-espresso text-cream border-espresso" : "bg-paper border-line text-bark hover:border-bark/30"
@@ -321,15 +357,9 @@ export function CustomerDashboard() {
                     </div>
                     <NeonButton
                       variant="solid"
-                      disabled={cart.length === 0}
+                      disabled={cart.length === 0 || isBrewing}
                       className="w-full h-12 rounded-xl text-base"
-                      onClick={() => {
-                        if (orderType === "Dine-in" && !tableNo.trim()) {
-                          toast.error("Enter your table number first");
-                          return;
-                        }
-                        setOrderPlaced(true);
-                      }}
+                      onClick={handlePlaceOrder}
                     >
                       <CreditCard size={18} /> Place order · ₹{grandTotal}
                     </NeonButton>
@@ -347,6 +377,90 @@ export function CustomerDashboard() {
 
         </AnimatePresence>
       </main>
+
+      {/* ── COFFEE BREWING LOADER ── */}
+      <AnimatePresence>
+        {isBrewing && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-cream/98 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center"
+          >
+            <div className="relative w-32 h-32 mb-8 flex items-center justify-center">
+              {/* Animated Steam lines */}
+              <div className="absolute top-2 left-1/2 -translate-x-[20px] flex gap-2.5">
+                {[0, 1, 2].map((i) => (
+                  <motion.div 
+                    key={i}
+                    animate={{ 
+                      y: [15, -25],
+                      opacity: [0, 0.8, 0],
+                      scale: [0.7, 1.2, 0.8]
+                    }}
+                    transition={{ 
+                      duration: 1.6, 
+                      repeat: Infinity, 
+                      delay: i * 0.4,
+                      ease: "easeOut"
+                    }}
+                    className="w-1.5 h-6 bg-clay/30 rounded-full blur-[1px]"
+                  />
+                ))}
+              </div>
+
+              {/* Dynamic Animated Coffee Cup */}
+              <motion.div 
+                animate={{ 
+                  y: [0, -5, 0],
+                  rotate: [0, -1, 1, -1, 0]
+                }}
+                transition={{ 
+                  duration: 2.5, 
+                  repeat: Infinity, 
+                  ease: "easeInOut" 
+                }}
+                className="relative z-10 w-24 h-20 border-[3.5px] border-espresso rounded-b-[2rem] rounded-t-[4px] flex items-center justify-center bg-cream"
+              >
+                {/* Coffee Fluid Level */}
+                <motion.div 
+                  initial={{ height: "0%" }}
+                  animate={{ height: brewingStep === 0 ? "25%" : brewingStep === 1 ? "55%" : brewingStep === 2 ? "80%" : "95%" }}
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
+                  className="absolute bottom-0 left-0 right-0 bg-clay rounded-b-[1.7rem] opacity-90"
+                />
+                
+                {/* Cup Handle */}
+                <div className="absolute left-[calc(100%-2px)] top-3.5 w-5 h-9 border-[3.5px] border-l-0 border-espresso rounded-r-xl" />
+              </motion.div>
+            </div>
+            
+            <motion.h3 
+              key={brewingStep}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="text-xl text-espresso font-display font-semibold tracking-tight max-w-sm h-12"
+            >
+              {[
+                "Grinding Chikmagalur cardamom beans...",
+                "Extracting espresso shot...",
+                "Frothing velvety warm milk...",
+                "Sending order tickets to roastery..."
+              ][brewingStep] || "Preparing tray..."}
+            </motion.h3>
+            
+            <div className="w-52 h-1.5 bg-line rounded-full overflow-hidden mt-6">
+              <motion.div 
+                initial={{ width: "0%" }}
+                animate={{ width: `${(brewingStep + 1) * 25}%` }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+                className="h-full bg-clay rounded-full"
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

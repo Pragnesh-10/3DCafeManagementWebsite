@@ -3,6 +3,8 @@ import { Card } from "../components/Card";
 import { motion, AnimatePresence } from "motion/react";
 import { Clock, CheckCircle2, ChefHat, ShoppingBag, UtensilsCrossed, Globe, ChevronRight } from "lucide-react";
 import { cn } from "../utils/cn";
+import { triggerHaptic } from "../utils/haptics";
+import { toast } from "sonner";
 
 type OrderStatus = "Received" | "Preparing" | "Ready" | "Served";
 type OrderType = "Dine-in" | "Takeaway" | "Online";
@@ -35,8 +37,16 @@ const COLUMNS: { title: OrderStatus; icon: React.ElementType; dot: string }[] = 
 export function Orders() {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
 
-  const moveOrder = (id: string, newStatus: OrderStatus) =>
+  const moveOrder = (id: string, newStatus: OrderStatus) => {
+    if (newStatus === "Served") {
+      triggerHaptic("success");
+    } else {
+      triggerHaptic("medium");
+    }
+    
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o)));
+    toast.success(`Order #${id} is now in ${newStatus.toLowerCase()} status!`);
+  };
 
   const getTypeIcon = (type: OrderType) => {
     switch (type) {
@@ -108,7 +118,7 @@ export function Orders() {
                                   order.status === "Preparing" ? "Ready" : "Served";
                                 moveOrder(order.id, next);
                               }}
-                              className="text-xs px-2.5 py-1.5 rounded-md flex items-center gap-1 bg-espresso text-cream hover:bg-clay transition-colors"
+                              className="text-xs px-2.5 py-1.5 rounded-md flex items-center gap-1 bg-espresso text-cream hover:bg-clay transition-colors cursor-pointer"
                             >
                               Advance <ChevronRight size={13} />
                             </button>

@@ -7,6 +7,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "../utils/supabase";
+import { triggerHaptic } from "../utils/haptics";
 
 export function Login() {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ export function Login() {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    triggerHaptic("medium");
 
     if (isSignUp) {
       // 1. Sign Up Flow
@@ -36,13 +38,16 @@ export function Login() {
         });
 
         if (error) {
+          triggerHaptic("error");
           toast.error(error.message);
         } else if (data?.user) {
+          triggerHaptic("success");
           toast.success("Successfully registered! Please log in.");
           setIsSignUp(false);
           setPassword("");
         }
       } else {
+        triggerHaptic("success");
         toast.info("Offline / Mock mode: Supabase is not configured. Account registration simulated.");
         toast.success("Mock sign up complete! You can now log in using standard credentials.");
         setIsSignUp(false);
@@ -61,14 +66,17 @@ export function Login() {
           if (role === "admin" && email === "admin@cardamom.com" && password === "admin123") {
             sessionStorage.setItem("user_role", "admin");
             sessionStorage.setItem("user_name", "Priya Nair");
+            triggerHaptic("success");
             toast.success("Welcome back (Demo Admin)!");
             navigate("/admin");
           } else if (role === "customer" && email === "hello@guest.com" && password === "guest123") {
             sessionStorage.setItem("user_role", "customer");
             sessionStorage.setItem("user_name", "Guest Explorer");
+            triggerHaptic("success");
             toast.success("Welcome to Cardamom (Demo Customer)!");
             navigate("/order");
           } else {
+            triggerHaptic("error");
             toast.error(error.message);
           }
         } else if (data?.user) {
@@ -77,6 +85,7 @@ export function Login() {
           
           sessionStorage.setItem("user_role", userRole);
           sessionStorage.setItem("user_name", userName);
+          triggerHaptic("success");
           toast.success(`Welcome back, ${userName}!`);
           
           if (userRole === "admin") {
@@ -91,18 +100,22 @@ export function Login() {
           if (email === "admin@cardamom.com" && password === "admin123") {
             sessionStorage.setItem("user_role", "admin");
             sessionStorage.setItem("user_name", "Priya Nair");
+            triggerHaptic("success");
             toast.success("Welcome back, Priya!");
             navigate("/admin");
           } else {
+            triggerHaptic("error");
             toast.error("Invalid admin credentials. Use admin@cardamom.com / admin123");
           }
         } else {
           if (email === "hello@guest.com" && password === "guest123") {
             sessionStorage.setItem("user_role", "customer");
             sessionStorage.setItem("user_name", "Guest Explorer");
+            triggerHaptic("success");
             toast.success("Welcome to Cardamom!");
             navigate("/order");
           } else {
+            triggerHaptic("error");
             toast.error("Invalid credentials. Use hello@guest.com / guest123");
           }
         }
@@ -111,9 +124,18 @@ export function Login() {
     setIsLoading(false);
   };
 
+  const handleRoleSelection = (selectedRole: "admin" | "customer") => {
+    triggerHaptic("medium");
+    setRole(selectedRole);
+  };
+
   return (
     <div className="min-h-screen bg-cream flex flex-col items-center justify-center p-6 selection:bg-clay/20">
-      <Link to="/" className="absolute top-8 left-8 flex items-center gap-2 text-bark-soft hover:text-espresso transition-colors">
+      <Link 
+        to="/" 
+        onClick={() => triggerHaptic("light")}
+        className="absolute top-8 left-8 flex items-center gap-2 text-bark-soft hover:text-espresso transition-colors"
+      >
         <ArrowLeft size={18} />
         <span className="text-sm uppercase tracking-widest">Back to Home</span>
       </Link>
@@ -148,8 +170,8 @@ export function Login() {
               className="grid gap-4"
             >
               <button
-                onClick={() => setRole("customer")}
-                className="group flex items-center gap-5 p-5 bg-sand/30 border border-line rounded-2xl hover:border-clay/50 hover:bg-sand/50 transition-all text-left"
+                onClick={() => handleRoleSelection("customer")}
+                className="group flex items-center gap-5 p-5 bg-sand/30 border border-line rounded-2xl hover:border-clay/50 hover:bg-sand/50 transition-all text-left cursor-pointer"
               >
                 <div className="w-12 h-12 rounded-xl bg-paper flex items-center justify-center text-clay group-hover:scale-110 transition-transform">
                   <User size={24} />
@@ -163,8 +185,8 @@ export function Login() {
               </button>
 
               <button
-                onClick={() => setRole("admin")}
-                className="group flex items-center gap-5 p-5 bg-sand/30 border border-line rounded-2xl hover:border-clay/50 hover:bg-sand/50 transition-all text-left"
+                onClick={() => handleRoleSelection("admin")}
+                className="group flex items-center gap-5 p-5 bg-sand/30 border border-line rounded-2xl hover:border-clay/50 hover:bg-sand/50 transition-all text-left cursor-pointer"
               >
                 <div className="w-12 h-12 rounded-xl bg-paper flex items-center justify-center text-espresso group-hover:scale-110 transition-transform">
                   <ShieldCheck size={24} />
@@ -190,10 +212,11 @@ export function Login() {
                 <button
                   type="button"
                   onClick={() => {
+                    triggerHaptic("light");
                     setRole(null);
                     setIsSignUp(false);
                   }}
-                  className="text-xs text-bark-soft hover:text-espresso underline underline-offset-4"
+                  className="text-xs text-bark-soft hover:text-espresso underline underline-offset-4 cursor-pointer"
                 >
                   Change role
                 </button>
@@ -204,8 +227,11 @@ export function Login() {
                 <span className="text-xs text-line">|</span>
                 <button
                   type="button"
-                  onClick={() => setIsSignUp(!isSignUp)}
-                  className="text-xs text-clay hover:text-espresso font-semibold"
+                  onClick={() => {
+                    triggerHaptic("light");
+                    setIsSignUp(!isSignUp);
+                  }}
+                  className="text-xs text-clay hover:text-espresso font-semibold cursor-pointer"
                 >
                   {isSignUp ? "Switch to Login" : "Switch to Register"}
                 </button>
@@ -249,7 +275,13 @@ export function Login() {
                 <div className="flex justify-between items-center">
                   <Label htmlFor="password">Password</Label>
                   {!isSignUp && (
-                    <button type="button" className="text-xs text-bark-soft hover:text-clay">Forgot?</button>
+                    <button 
+                      type="button" 
+                      onClick={() => triggerHaptic("light")}
+                      className="text-xs text-bark-soft hover:text-clay cursor-pointer"
+                    >
+                      Forgot?
+                    </button>
                   )}
                 </div>
                 <div className="relative">
@@ -266,7 +298,7 @@ export function Login() {
                 </div>
               </div>
 
-              <Button type="submit" disabled={isLoading} className="w-full h-12 rounded-xl text-base">
+              <Button type="submit" disabled={isLoading} className="w-full h-12 rounded-xl text-base cursor-pointer">
                 {isLoading ? (
                   <Loader2 className="animate-spin" />
                 ) : (
@@ -283,8 +315,8 @@ export function Login() {
                       Already have an account?{" "}
                       <button
                         type="button"
-                        onClick={() => setIsSignUp(false)}
-                        className="text-clay hover:underline font-semibold"
+                        onClick={() => { triggerHaptic("light"); setIsSignUp(false); }}
+                        className="text-clay hover:underline font-semibold cursor-pointer bg-transparent border-0 p-0"
                       >
                         Sign In
                       </button>
@@ -294,8 +326,8 @@ export function Login() {
                       Don't have an account?{" "}
                       <button
                         type="button"
-                        onClick={() => setIsSignUp(true)}
-                        className="text-clay hover:underline font-semibold"
+                        onClick={() => { triggerHaptic("light"); setIsSignUp(true); }}
+                        className="text-clay hover:underline font-semibold cursor-pointer bg-transparent border-0 p-0"
                       >
                         Join the Bean Club
                       </button>

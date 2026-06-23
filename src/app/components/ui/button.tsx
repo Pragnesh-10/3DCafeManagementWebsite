@@ -34,11 +34,14 @@ const buttonVariants = cva(
   },
 );
 
+import { triggerHaptic } from "../../utils/haptics";
+
 function Button({
   className,
   variant,
   size,
   asChild = false,
+  onClick,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
@@ -46,10 +49,18 @@ function Button({
   }) {
   const Comp = asChild ? Slot : "button";
 
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    triggerHaptic("light");
+    if (onClick) {
+      onClick(e);
+    }
+  };
+
   return (
     <Comp
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
+      onClick={handleClick}
       {...props}
     />
   );

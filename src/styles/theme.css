@@ -117,6 +117,21 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Cardamom Cafe Management Custom Colors */
+  --color-cream: #fdfaf2;
+  --color-espresso: #2c2118;
+  --color-clay: #b85c38;
+  --color-clay-dark: #984524;
+  --color-bark: #5c4a3c;
+  --color-bark-soft: #93826e;
+  --color-honey: #c0892f;
+  --color-sage: #607254;
+  --color-berry: #8c3b3b;
+  --color-line: #e7dcc9;
+  --color-paper: #fbf6ec;
+  --color-paper-raised: #ffffff;
+  --color-sand: #f0e6d2;
 }
 
 @layer base {
