@@ -48,8 +48,7 @@ export function Login() {
         }
       } else {
         triggerHaptic("success");
-        toast.info("Offline / Mock mode: Supabase is not configured. Account registration simulated.");
-        toast.success("Mock sign up complete! You can now log in using standard credentials.");
+        toast.info("Offline mode: Account registration simulated.");
         setIsSignUp(false);
         setPassword("");
       }
@@ -62,23 +61,8 @@ export function Login() {
         });
 
         if (error) {
-          // Fallback to mock credentials if Supabase check fails but user is testing demo accounts
-          if (role === "admin" && email === "admin@cardamom.com" && password === "admin123") {
-            sessionStorage.setItem("user_role", "admin");
-            sessionStorage.setItem("user_name", "Priya Nair");
-            triggerHaptic("success");
-            toast.success("Welcome back (Demo Admin)!");
-            navigate("/admin");
-          } else if (role === "customer" && email === "hello@guest.com" && password === "guest123") {
-            sessionStorage.setItem("user_role", "customer");
-            sessionStorage.setItem("user_name", "Guest Explorer");
-            triggerHaptic("success");
-            toast.success("Welcome to Cardamom (Demo Customer)!");
-            navigate("/order");
-          } else {
-            triggerHaptic("error");
-            toast.error(error.message);
-          }
+          triggerHaptic("error");
+          toast.error(error.message);
         } else if (data?.user) {
           const userRole = data.user.user_metadata?.role || (email.includes("admin") ? "admin" : "customer");
           const userName = data.user.user_metadata?.full_name || data.user.email?.split("@")[0] || "User";
@@ -95,29 +79,20 @@ export function Login() {
           }
         }
       } else {
-        // Fallback mock check when Supabase is completely unconfigured
+        // Offline / Mock Mode: Dynamically authenticate any credentials to facilitate clean local testing
+        const nameFromEmail = email.split("@")[0];
+        const formattedName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
+        
+        sessionStorage.setItem("user_role", role);
+        sessionStorage.setItem("user_name", role === "admin" ? "Store Manager" : formattedName || "Guest Explorer");
+        triggerHaptic("success");
+        toast.info("Running in offline / mock mode.");
+        toast.success(`Logged in as ${role === "admin" ? "Staff" : "Customer"}!`);
+        
         if (role === "admin") {
-          if (email === "admin@cardamom.com" && password === "admin123") {
-            sessionStorage.setItem("user_role", "admin");
-            sessionStorage.setItem("user_name", "Priya Nair");
-            triggerHaptic("success");
-            toast.success("Welcome back, Priya!");
-            navigate("/admin");
-          } else {
-            triggerHaptic("error");
-            toast.error("Invalid admin credentials. Use admin@cardamom.com / admin123");
-          }
+          navigate("/admin");
         } else {
-          if (email === "hello@guest.com" && password === "guest123") {
-            sessionStorage.setItem("user_role", "customer");
-            sessionStorage.setItem("user_name", "Guest Explorer");
-            triggerHaptic("success");
-            toast.success("Welcome to Cardamom!");
-            navigate("/order");
-          } else {
-            triggerHaptic("error");
-            toast.error("Invalid credentials. Use hello@guest.com / guest123");
-          }
+          navigate("/order");
         }
       }
     }
@@ -179,7 +154,6 @@ export function Login() {
                 <div>
                   <h3 className="text-espresso font-semibold">Customer Portal</h3>
                   <p className="text-xs text-bark-soft">Order your favourite brew &amp; earn beans</p>
-                  <p className="text-[10px] font-mono text-bark-soft/60 mt-1">hello@guest.com · guest123</p>
                 </div>
                 <ArrowRight className="ml-auto text-bark-soft group-hover:text-clay transition-colors" size={20} />
               </button>
@@ -194,7 +168,6 @@ export function Login() {
                 <div>
                   <h3 className="text-espresso font-semibold">Staff Dashboard</h3>
                   <p className="text-xs text-bark-soft">Manage roastery, orders, and team</p>
-                  <p className="text-[10px] font-mono text-bark-soft/60 mt-1">admin@cardamom.com · admin123</p>
                 </div>
                 <ArrowRight className="ml-auto text-bark-soft group-hover:text-espresso transition-colors" size={20} />
               </button>
@@ -245,7 +218,7 @@ export function Login() {
                     <Input
                       id="fullName"
                       type="text"
-                      placeholder="Jane Doe"
+                      placeholder="e.g. Jane Doe"
                       required
                       className="pl-10"
                       value={fullName}
@@ -262,7 +235,7 @@ export function Login() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder={role === "admin" ? "admin@cardamom.com" : "hello@guest.com"}
+                    placeholder="e.g. name@domain.com"
                     required
                     className="pl-10"
                     value={email}
@@ -278,7 +251,7 @@ export function Login() {
                     <button 
                       type="button" 
                       onClick={() => triggerHaptic("light")}
-                      className="text-xs text-bark-soft hover:text-clay cursor-pointer"
+                      className="text-xs text-bark-soft hover:text-clay cursor-pointer bg-transparent border-0 p-0"
                     >
                       Forgot?
                     </button>

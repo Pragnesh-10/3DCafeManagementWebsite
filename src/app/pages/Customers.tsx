@@ -8,6 +8,7 @@ import { Button as NeonButton } from "../components/ui/neon-button";
 import { CafeSpotlightHero } from "../components/CafeSpotlightHero";
 import { triggerHaptic } from "../utils/haptics";
 import { toast } from "sonner";
+import { useCafeStore } from "../utils/store";
 
 type Mode = "people" | "order";
 
@@ -19,18 +20,15 @@ const MENU_ITEMS = [
   { id: 5, name: "Blueberry Muffin", category: "Pastries", price: 240, image: "https://images.unsplash.com/photo-1607958996333-41aef7caefaa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
 ];
 
-const TOP_CUSTOMERS = [
-  { name: "Emma Thompson", visits: 42, spent: 18450, tier: "Gold", lastVisit: "2 days ago" },
-  { name: "Michael Chen", visits: 38, spent: 15380, tier: "Gold", lastVisit: "Today" },
-  { name: "Sarah Jenkins", visits: 25, spent: 8210, tier: "Silver", lastVisit: "1 week ago" },
-];
-
 export function Customers() {
   const [mode, setMode] = useState<Mode>("people");
   const [hasStarted, setHasStarted] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All");
   const [cart, setCart] = useState<{ item: typeof MENU_ITEMS[0]; qty: number }[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [query, setQuery] = useState("");
+
+  const { customers, placeOrder } = useCafeStore();
 
   const addToCart = (item: typeof MENU_ITEMS[0]) => {
     triggerHaptic("light");
@@ -52,6 +50,10 @@ export function Customers() {
   const handleTakePayment = () => {
     setIsProcessing(true);
     triggerHaptic("medium");
+    
+    // Call store placeOrder
+    placeOrder("Walk-in Customer", cart, "Takeaway");
+
     setTimeout(() => {
       setIsProcessing(false);
       triggerHaptic("success");
@@ -107,7 +109,7 @@ export function Customers() {
             <Card raised className="flex flex-col items-start p-6">
               <div className="w-12 h-12 rounded-full bg-clay/12 flex items-center justify-center text-clay mb-4"><Award size={24} /></div>
               <h3 className="text-2xl text-espresso">Bean Club</h3>
-              <p className="text-sm text-bark mt-1 mb-5">428 members · 1 point per ₹20 spent</p>
+              <p className="text-sm text-bark mt-1 mb-5">{customers.length} members · 1 point per ₹20 spent</p>
               <NeonButton variant="default" className="mt-auto w-full cursor-pointer">
                 Manage rewards
               </NeonButton>
@@ -118,33 +120,44 @@ export function Customers() {
                 <h3 className="text-lg text-espresso">Top regulars</h3>
                 <div className="relative">
                   <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-bark-soft" />
-                  <input type="text" placeholder="Search…" className="bg-paper-raised border border-line rounded-full pl-8 pr-4 py-1.5 text-sm text-espresso placeholder:text-bark-soft focus:outline-none focus:border-clay/60 focus:ring-2 focus:ring-clay/15" />
+                  <input 
+                    type="text" 
+                    placeholder="Search…" 
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    className="bg-paper-raised border border-line rounded-full pl-8 pr-4 py-1.5 text-sm text-espresso placeholder:text-bark-soft focus:outline-none focus:border-clay/60 focus:ring-2 focus:ring-clay/15" 
+                  />
                 </div>
               </div>
               <div className="divide-y divide-line/60">
-                {TOP_CUSTOMERS.map((cust) => (
-                  <div key={cust.name} className="px-5 py-4 flex items-center justify-between hover:bg-sand/40 transition-colors">
-                    <div className="flex items-center gap-3.5">
-                      <span className="w-10 h-10 rounded-full bg-espresso text-cream flex items-center justify-center">{cust.name.charAt(0)}</span>
-                      <div>
-                        <h4 className="text-espresso">{cust.name}</h4>
-                        <p className="text-xs text-bark-soft flex items-center gap-1.5 mt-0.5"><History size={12} /> {cust.lastVisit}</p>
+                {customers
+                  .filter((c) => c.name.toLowerCase().includes(query.toLowerCase()))
+                  .map((cust) => (
+                    <div key={cust.name} className="px-5 py-4 flex items-center justify-between hover:bg-sand/40 transition-colors">
+                      <div className="flex items-center gap-3.5">
+                        <span className="w-10 h-10 rounded-full bg-espresso text-cream flex items-center justify-center">{cust.name.charAt(0)}</span>
+                        <div>
+                          <h4 className="text-espresso">{cust.name}</h4>
+                          <p className="text-xs text-bark-soft flex items-center gap-1.5 mt-0.5"><History size={12} /> {cust.lastVisit}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-5">
+                        <div className="text-right">
+                          <p className="font-mono text-sm text-espresso">₹{cust.spent.toLocaleString("en-IN")}</p>
+                          <p className="text-xs text-bark-soft">{cust.visits} visits</p>
+                        </div>
+                        <span className={cn(
+                          "px-2 py-0.5 rounded text-xs flex items-center gap-1",
+                          cust.tier === "Gold" ? "bg-honey/15 text-honey" : cust.tier === "Silver" ? "bg-sand text-bark" : "bg-sand/40 text-bark-soft"
+                        )}>
+                          <Star size={10} fill="currentColor" /> {cust.tier}
+                        </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-5">
-                      <div className="text-right">
-                        <p className="font-mono text-sm text-espresso">₹{cust.spent.toLocaleString("en-IN")}</p>
-                        <p className="text-xs text-bark-soft">{cust.visits} visits</p>
-                      </div>
-                      <span className={cn(
-                        "px-2 py-0.5 rounded text-xs flex items-center gap-1",
-                        cust.tier === "Gold" ? "bg-honey/15 text-honey" : "bg-sand text-bark"
-                      )}>
-                        <Star size={10} fill="currentColor" /> {cust.tier}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                {customers.filter((c) => c.name.toLowerCase().includes(query.toLowerCase())).length === 0 && (
+                  <p className="text-center text-xs text-bark-soft py-8">No regulars found matching your search</p>
+                )}
               </div>
             </Card>
           </motion.div>

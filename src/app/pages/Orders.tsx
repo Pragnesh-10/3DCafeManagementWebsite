@@ -1,31 +1,11 @@
-import React, { useState } from "react";
+import React from "react";
 import { Card } from "../components/Card";
 import { motion, AnimatePresence } from "motion/react";
 import { Clock, CheckCircle2, ChefHat, ShoppingBag, UtensilsCrossed, Globe, ChevronRight } from "lucide-react";
 import { cn } from "../utils/cn";
 import { triggerHaptic } from "../utils/haptics";
 import { toast } from "sonner";
-
-type OrderStatus = "Received" | "Preparing" | "Ready" | "Served";
-type OrderType = "Dine-in" | "Takeaway" | "Online";
-
-interface Order {
-  id: string;
-  customer: string;
-  items: { name: string; qty: number }[];
-  status: OrderStatus;
-  type: OrderType;
-  time: string;
-  total: number;
-}
-
-const initialOrders: Order[] = [
-  { id: "1042", customer: "Alice M.", items: [{ name: "Caramel Macchiato", qty: 2 }, { name: "Butter Croissant", qty: 1 }], status: "Received", type: "Dine-in", time: "2m", total: 540 },
-  { id: "1043", customer: "Swiggy", items: [{ name: "Espresso", qty: 1 }, { name: "Avocado Toast", qty: 1 }], status: "Received", type: "Online", time: "1m", total: 430 },
-  { id: "1040", customer: "John D.", items: [{ name: "Iced Latte", qty: 1 }], status: "Preparing", type: "Takeaway", time: "5m", total: 220 },
-  { id: "1039", customer: "Table 4", items: [{ name: "Mocha", qty: 2 }, { name: "Blueberry Muffin", qty: 2 }], status: "Preparing", type: "Dine-in", time: "8m", total: 760 },
-  { id: "1038", customer: "Sarah K.", items: [{ name: "Matcha Latte", qty: 1 }], status: "Ready", type: "Takeaway", time: "12m", total: 280 },
-];
+import { useCafeStore, type OrderStatus, type OrderType } from "../utils/store";
 
 const COLUMNS: { title: OrderStatus; icon: React.ElementType; dot: string }[] = [
   { title: "Received", icon: Clock, dot: "bg-honey" },
@@ -35,7 +15,7 @@ const COLUMNS: { title: OrderStatus; icon: React.ElementType; dot: string }[] = 
 ];
 
 export function Orders() {
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const { orders, advanceOrderStatus } = useCafeStore();
 
   const moveOrder = (id: string, newStatus: OrderStatus) => {
     if (newStatus === "Served") {
@@ -44,7 +24,7 @@ export function Orders() {
       triggerHaptic("medium");
     }
     
-    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status: newStatus } : o)));
+    advanceOrderStatus(id, newStatus);
     toast.success(`Order #${id} is now in ${newStatus.toLowerCase()} status!`);
   };
 

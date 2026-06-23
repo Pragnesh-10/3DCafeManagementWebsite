@@ -4,15 +4,7 @@ import { AlertTriangle, Package, RefreshCw, Plus, ArrowUp, ArrowDown, Minus, Loa
 import { Button as NeonButton } from "../components/ui/neon-button";
 import { triggerHaptic } from "../utils/haptics";
 import { toast } from "sonner";
-
-const INVENTORY = [
-  { id: "INV-001", item: "Espresso beans (house blend)", category: "Raw material", stock: "12 kg", status: "Good", trend: "down" },
-  { id: "INV-002", item: "Whole milk", category: "Dairy", stock: "4 L", status: "Low", trend: "down" },
-  { id: "INV-003", item: "Almond milk", category: "Dairy", stock: "2 L", status: "Critical", trend: "down" },
-  { id: "INV-004", item: "Butter croissants", category: "Pastry", stock: "24 pcs", status: "Good", trend: "up" },
-  { id: "INV-005", item: "Vanilla syrup", category: "Syrup", stock: "5 bottles", status: "Good", trend: "stable" },
-  { id: "INV-006", item: "Takeaway cups (M)", category: "Packaging", stock: "150 pcs", status: "Good", trend: "down" },
-] as const;
+import { useCafeStore } from "../utils/store";
 
 const statusStyles: Record<string, string> = {
   Good: "bg-sage/12 text-sage",
@@ -23,7 +15,15 @@ const statusStyles: Record<string, string> = {
 export function Inventory() {
   const [query, setQuery] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
-  const rows = INVENTORY.filter((r) => r.item.toLowerCase().includes(query.toLowerCase()));
+  const { inventory, restockInventory } = useCafeStore();
+
+  const rows = inventory.filter((r) => r.item.toLowerCase().includes(query.toLowerCase()));
+
+  // Count items with Low/Critical status
+  const criticalCount = inventory.filter((i) => i.status === "Low" || i.status === "Critical").length;
+
+  // Calculate total pantry value dynamically if needed, or estimate
+  const inventoryValue = 202450; // Dynamic mock value
 
   const handleSync = () => {
     setIsSyncing(true);
@@ -42,10 +42,12 @@ export function Inventory() {
     });
   };
 
-  const handleReorder = (item: string) => {
+  const handleReorder = (id: string, name: string) => {
     triggerHaptic("light");
-    toast.success(`Reorder request sent for ${item}`, {
-      description: "A replenishment ticket has been raised."
+    // Restock with 10 units dynamically
+    restockInventory(id, 10);
+    toast.success(`Replenished 10 units of ${name}!`, {
+      description: "Inventory stock counts updated in real-time."
     });
   };
 
@@ -71,19 +73,19 @@ export function Inventory() {
         <Card>
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-bark text-sm">Low on stock</p>
-              <h3 className="text-3xl font-mono text-espresso mt-1">4</h3>
+              <p className="text-bark text-sm">Low/Critical stock</p>
+              <h3 className="text-3xl font-mono text-espresso mt-1">{criticalCount}</h3>
             </div>
             <div className="p-2.5 bg-honey/15 rounded-lg text-honey"><AlertTriangle size={20} /></div>
           </div>
-          <p className="mt-4 text-sm text-bark">Two items already queued for auto-reorder.</p>
+          <p className="mt-4 text-sm text-bark">Replenishment warnings active for low units.</p>
         </Card>
 
         <Card>
           <div className="flex items-start justify-between">
             <div>
               <p className="text-bark text-sm">Pantry value</p>
-              <h3 className="text-3xl font-mono text-espresso mt-1">₹2,02,450</h3>
+              <h3 className="text-3xl font-mono text-espresso mt-1">₹{inventoryValue.toLocaleString("en-IN")}</h3>
             </div>
             <div className="p-2.5 bg-sage/12 rounded-lg text-sage"><Package size={20} /></div>
           </div>
@@ -131,14 +133,14 @@ export function Inventory() {
                     </span>
                   </td>
                   <td className="px-5 py-3.5 text-sm text-bark">{item.category}</td>
-                  <td className="px-5 py-3.5 text-sm font-mono text-espresso">{item.stock}</td>
+                  <td className="px-5 py-3.5 text-sm font-mono text-espresso">{item.stock.toFixed(2)} {item.unit}</td>
                   <td className="px-5 py-3.5">
                     <span className={`inline-flex px-2 py-0.5 rounded text-xs ${statusStyles[item.status]}`}>{item.status}</span>
                   </td>
                   <td className="px-5 py-3.5 text-right">
                     <button 
-                      onClick={() => handleReorder(item.item)}
-                      className="text-clay hover:text-clay-dark text-sm transition-colors cursor-pointer"
+                      onClick={() => handleReorder(item.id, item.item)}
+                      className="text-clay hover:text-clay-dark text-sm transition-colors cursor-pointer bg-transparent border-0 p-0"
                     >
                       Reorder
                     </button>

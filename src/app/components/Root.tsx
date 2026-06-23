@@ -67,16 +67,20 @@ export function Root() {
           <div className="flex items-center gap-3 pl-1.5 pr-1.5 py-1.5 rounded-full hover:bg-sand transition-colors group">
             <img
               src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&h=100&fit=crop&auto=format"
-              alt="Priya Nair, café manager"
+              alt="User avatar"
               className="w-8 h-8 rounded-full object-cover bg-sand"
             />
             <div className="hidden md:block text-left">
-              <p className="text-sm leading-tight text-espresso">Priya Nair</p>
-              <p className="text-bark-soft text-xs leading-tight">Store Manager</p>
+              <p className="text-sm leading-tight text-espresso">
+                {sessionStorage.getItem("user_name") || "Priya Nair"}
+              </p>
+              <p className="text-bark-soft text-xs leading-tight">
+                {sessionStorage.getItem("user_role") === "admin" ? "Store Manager" : "Staff Member"}
+              </p>
             </div>
             <button 
               onClick={handleLogout}
-              className="p-2 ml-1 text-bark-soft hover:text-clay transition-colors opacity-0 group-hover:opacity-100"
+              className="p-2 ml-1 text-bark-soft hover:text-clay transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
               title="Logout"
             >
               <LogOut size={16} />

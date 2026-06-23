@@ -9,6 +9,7 @@ import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { triggerHaptic } from "../utils/haptics";
+import { useCafeStore } from "../utils/store";
 
 const MENU_ITEMS = [
   { id: 1, name: "Flat White", category: "Hot drinks", price: 210, image: "https://images.unsplash.com/photo-1615485736894-a2d2e6d4cd9a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
@@ -21,6 +22,7 @@ const MENU_ITEMS = [
 
 export function CustomerDashboard() {
   const navigate = useNavigate();
+  const { placeOrder } = useCafeStore();
   const [hasStarted, setHasStarted] = useState(true);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderType, setOrderType] = useState<"Dine-in" | "Takeaway" | "Online">("Dine-in");
@@ -79,6 +81,12 @@ export function CustomerDashboard() {
         triggerHaptic("light");
       } else {
         clearInterval(interval);
+        // Call store placeOrder dynamically
+        placeOrder(
+          orderType === "Dine-in" ? `Table ${tableNo}` : "Online Guest",
+          cart,
+          orderType
+        );
         setIsBrewing(false);
         setOrderPlaced(true);
         triggerHaptic("success");

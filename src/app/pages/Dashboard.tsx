@@ -4,6 +4,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar,
 } from "recharts";
 import { TrendingUp, Users, IndianRupee, Coffee, ArrowUpRight } from "lucide-react";
+import { useCafeStore } from "../utils/store";
 
 const salesData = [
   { time: "8a", actual: 1200, forecast: 1300 },
@@ -25,13 +26,6 @@ const demandData = [
   { day: "Sun", coffee: 90, food: 75 },
 ];
 
-const KPIS = [
-  { label: "Revenue today", value: "₹42,890", trend: "+12.5%", icon: IndianRupee, note: "vs. ₹38,120 yesterday" },
-  { label: "Cups poured", value: "318", trend: "+4.1%", icon: Coffee, note: "24 open tickets" },
-  { label: "Guests served", value: "142", trend: "+18.2%", icon: Users, note: "41 new faces" },
-  { label: "Avg. ticket", value: "₹302", trend: "+6.0%", icon: TrendingUp, note: "rolling 7-day mean" },
-];
-
 const tooltipStyle = {
   backgroundColor: "#fbf6ec",
   border: "1px solid #ddcfb8",
@@ -43,7 +37,35 @@ const tooltipStyle = {
 
 export function Dashboard() {
   const [mounted, setMounted] = useState(false);
+  const { orders, transactions, customers } = useCafeStore();
+
   useEffect(() => setMounted(true), []);
+
+  // Compute stats dynamically from the shared database store
+  const revenueToday = transactions
+    .filter((t) => t.status === "Paid")
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const cupsPoured = orders.reduce((sum, o) => {
+    return sum + o.items.reduce((acc, curr) => acc + curr.qty, 0);
+  }, 0);
+
+  const openTickets = orders.filter((o) => o.status !== "Served").length;
+
+  const guestsServed = customers.reduce((sum, c) => sum + c.visits, 0);
+
+  const avgTicket = orders.length > 0
+    ? Math.round(orders.reduce((sum, o) => sum + o.total, 0) / orders.length)
+    : 0;
+
+  const KPIS = [
+    { label: "Revenue today", value: `₹${revenueToday.toLocaleString("en-IN")}`, trend: "+12.5%", icon: IndianRupee, note: "vs. ₹38,120 yesterday" },
+    { label: "Cups poured", value: cupsPoured.toString(), trend: "+4.1%", icon: Coffee, note: `${openTickets} open tickets` },
+    { label: "Guests served", value: guestsServed.toString(), trend: "+18.2%", icon: Users, note: `${customers.length} total members` },
+    { label: "Avg. ticket", value: `₹${avgTicket}`, trend: "+6.0%", icon: TrendingUp, note: "rolling 7-day average" },
+  ];
+
+  const adminName = (sessionStorage.getItem("user_name") || "Priya Nair").split(" ")[0];
 
   return (
     <div className="space-y-7">
@@ -51,7 +73,7 @@ export function Dashboard() {
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-bark-soft">Sunday · 21 June</p>
           <h1 className="text-3xl mt-1 text-espresso">
-            Good morning, <span className="italic font-normal text-clay">Priya</span>
+            Good morning, <span className="italic font-normal text-clay">{adminName}</span>
           </h1>
           <p className="text-bark mt-1.5">Here's how the roastery floor is trading today.</p>
         </div>
@@ -102,20 +124,20 @@ export function Dashboard() {
             {mounted && (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={salesData} margin={{ top: 8, right: 8, left: -8, bottom: 0 }}>
-                <defs key="defs">
-                  <linearGradient id="fillActual" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#b85c38" stopOpacity={0.28} />
-                    <stop offset="100%" stopColor="#b85c38" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid key="grid" strokeDasharray="2 5" stroke="#ddcfb8" vertical={false} />
-                <XAxis key="x" dataKey="time" stroke="#93826e" fontSize={12} tickLine={false} axisLine={false} dy={6} />
-                <YAxis key="y" stroke="#93826e" fontSize={12} tickLine={false} axisLine={false} width={48} tickFormatter={(v) => `₹${v / 1000}k`} />
-                <Tooltip key="tt" contentStyle={tooltipStyle} cursor={{ stroke: "#ddcfb8" }} formatter={(v: number) => `₹${v.toLocaleString("en-IN")}`} />
-                <Area key="a1" type="monotone" dataKey="actual" stroke="#b85c38" strokeWidth={2.5} fill="url(#fillActual)" name="Actual" />
-                <Area key="a2" type="monotone" dataKey="forecast" stroke="#93826e" strokeWidth={2} strokeDasharray="5 5" fill="transparent" name="Forecast" />
-              </AreaChart>
-            </ResponsiveContainer>
+                  <defs key="defs">
+                    <linearGradient id="fillActual" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#b85c38" stopOpacity={0.28} />
+                      <stop offset="100%" stopColor="#b85c38" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid key="grid" strokeDasharray="2 5" stroke="#ddcfb8" vertical={false} />
+                  <XAxis key="x" dataKey="time" stroke="#93826e" fontSize={12} tickLine={false} axisLine={false} dy={6} />
+                  <YAxis key="y" stroke="#93826e" fontSize={12} tickLine={false} axisLine={false} width={48} tickFormatter={(v) => `₹${v / 1000}k`} />
+                  <Tooltip key="tt" contentStyle={tooltipStyle} cursor={{ stroke: "#ddcfb8" }} formatter={(v: number) => `₹${v.toLocaleString("en-IN")}`} />
+                  <Area key="a1" type="monotone" dataKey="actual" stroke="#b85c38" strokeWidth={2.5} fill="url(#fillActual)" name="Actual" />
+                  <Area key="a2" type="monotone" dataKey="forecast" stroke="#93826e" strokeWidth={2} strokeDasharray="5 5" fill="transparent" name="Forecast" />
+                </AreaChart>
+              </ResponsiveContainer>
             )}
           </div>
         </Card>
@@ -129,13 +151,13 @@ export function Dashboard() {
               {mounted && (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={demandData} margin={{ top: 4, right: 0, left: -20, bottom: 0 }} barGap={2}>
-                  <CartesianGrid key="grid" strokeDasharray="2 5" stroke="#ddcfb8" vertical={false} />
-                  <XAxis key="x" dataKey="day" stroke="#93826e" fontSize={11} tickLine={false} axisLine={false} />
-                  <Tooltip key="tt" cursor={{ fill: "#e7dcc9", opacity: 0.5 }} contentStyle={tooltipStyle} />
-                  <Bar key="b1" dataKey="coffee" fill="#b85c38" radius={[3, 3, 0, 0]} name="Coffee" />
-                  <Bar key="b2" dataKey="food" fill="#c0892f" radius={[3, 3, 0, 0]} name="Kitchen" />
-                </BarChart>
-              </ResponsiveContainer>
+                    <CartesianGrid key="grid" strokeDasharray="2 5" stroke="#ddcfb8" vertical={false} />
+                    <XAxis key="x" dataKey="day" stroke="#93826e" fontSize={11} tickLine={false} axisLine={false} />
+                    <Tooltip key="tt" cursor={{ fill: "#e7dcc9", opacity: 0.5 }} contentStyle={tooltipStyle} />
+                    <Bar key="b1" dataKey="coffee" fill="#b85c38" radius={[3, 3, 0, 0]} name="Coffee" />
+                    <Bar key="b2" dataKey="food" fill="#c0892f" radius={[3, 3, 0, 0]} name="Kitchen" />
+                  </BarChart>
+                </ResponsiveContainer>
               )}
             </div>
           </Card>
@@ -145,7 +167,7 @@ export function Dashboard() {
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-honey mt-2 shrink-0" />
-                <p className="text-sm text-bark">Almond milk running low — only <span className="text-espresso">2 L</span> left before the weekend rush.</p>
+                <p className="text-sm text-bark">Almond milk running low — check inventory replenish counts.</p>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-sage mt-2 shrink-0" />
