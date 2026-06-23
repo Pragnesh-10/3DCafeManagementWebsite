@@ -21,6 +21,8 @@ export interface OrderItem {
 export interface Order {
   id: string;
   customer: string;
+  customerPhone?: string;
+  customerAddress?: string;
   items: OrderItem[];
   status: OrderStatus;
   type: OrderType;
@@ -195,6 +197,69 @@ export function writeStoreData(data: ReturnType<typeof getStoreData>) {
   window.dispatchEvent(new Event(STORE_EVENT));
 }
 
+// Dispatch Telegram Notification helper
+export const sendTelegramNotification = async (order: Order, testMode = false) => {
+  const token = localStorage.getItem("cardamom_tg_token");
+  const chatId = localStorage.getItem("cardamom_tg_chat_id");
+
+  const emojiMap: Record<string, string> = {
+    "Dine-in": "🍽️ Dine-in",
+    "Takeaway": "🛍️ Takeaway",
+    "Online": "🚚 Delivery",
+  };
+
+  const typeLabel = emojiMap[order.type] || order.type;
+  
+  const itemsText = order.items
+    .map((item) => `• ${item.qty}x *${item.name}* (₹${item.price})`)
+    .join("\n");
+
+  const messageText = testMode 
+    ? `☕️ *Cardamom Telegram Test Message*\nYour integration settings are configured successfully! 🎉`
+    : `☕️ *New Cardamom Order Received!*\n` +
+      `---------------------------------------\n` +
+      `*Order ID:* #${order.id}\n` +
+      `*Type:* ${typeLabel}\n\n` +
+      `👤 *Customer Name:* ${order.customer}\n` +
+      `📞 *Mobile:* ${order.customerPhone || "N/A"}\n` +
+      `📍 *Delivery/Table:* ${order.customerAddress || "N/A"}\n\n` +
+      `*Items Ordered:*\n${itemsText}\n\n` +
+      `*Total Amount:* ₹${order.total} (incl. GST)\n` +
+      `---------------------------------------\n` +
+      `⏳ *Status:* Received - Awaiting preparation`;
+
+  if (typeof window !== "undefined") {
+    const event = new CustomEvent("telegram_notification_simulated", {
+      detail: { message: messageText, orderId: order.id }
+    });
+    window.dispatchEvent(event);
+  }
+
+  if (!token || !chatId) {
+    console.log("Telegram notification (simulated):\n", messageText);
+    return false;
+  }
+
+  try {
+    const url = `https://api.telegram.org/bot${token}/sendMessage`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: messageText,
+        parse_mode: "Markdown",
+      }),
+    });
+    return response.ok;
+  } catch (err) {
+    console.error("Failed to send Telegram notification:", err);
+    return false;
+  }
+};
+
 // Custom hook for unified café state with Supabase sync
 export function useCafeStore() {
   const [data, setData] = useState(getStoreData());
@@ -297,7 +362,9 @@ export function useCafeStore() {
   const placeOrder = (
     customer: string,
     items: { item: MenuItem; qty: number }[],
-    type: OrderType
+    type: OrderType,
+    customerPhone?: string,
+    customerAddress?: string
   ) => {
     const store = getStoreData();
     const orderId = (1000 + store.orders.length + Math.floor(Math.random() * 9000)).toString();
@@ -313,6 +380,8 @@ export function useCafeStore() {
     const newOrder: Order = {
       id: orderId,
       customer,
+      customerPhone,
+      customerAddress,
       items: orderItems,
       status: "Received",
       type,
@@ -322,6 +391,9 @@ export function useCafeStore() {
     };
 
     store.orders = [newOrder, ...store.orders];
+
+    // Trigger Telegram notification
+    sendTelegramNotification(newOrder);
 
     // Push to Supabase if connected
     if (supabase) {

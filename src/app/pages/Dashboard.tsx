@@ -5,6 +5,7 @@ import {
 } from "recharts";
 import { TrendingUp, Users, IndianRupee, Coffee, ArrowUpRight } from "lucide-react";
 import { useCafeStore } from "../utils/store";
+import { Navigate } from "react-router";
 
 const salesData = [
   { time: "8a", actual: 1200, forecast: 1300 },

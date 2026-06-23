@@ -33,6 +33,31 @@ export function CustomerDashboard() {
   const [isBrewing, setIsBrewing] = useState(false);
   const [brewingStep, setBrewingStep] = useState(0);
 
+  // New checkout and Telegram details states
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [custName, setCustName] = useState("");
+  const [custPhone, setCustPhone] = useState("");
+  const [custAddress, setCustAddress] = useState("");
+  const [pickupTime, setPickupTime] = useState("In 15 mins");
+  const [tgNotification, setTgNotification] = useState<string | null>(null);
+
+  // Listen to simulated Telegram event
+  React.useEffect(() => {
+    const handleTgEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ message: string }>;
+      setTgNotification(customEvent.detail.message);
+      // Auto close after 10 seconds
+      const timer = setTimeout(() => {
+        setTgNotification(null);
+      }, 10000);
+      return () => clearTimeout(timer);
+    };
+    window.addEventListener("telegram_notification_simulated", handleTgEvent);
+    return () => {
+      window.removeEventListener("telegram_notification_simulated", handleTgEvent);
+    };
+  }, []);
+
   const handleLogout = () => {
     triggerHaptic("medium");
     if (!sessionStorage.getItem("user_role")) {
@@ -62,13 +87,25 @@ export function CustomerDashboard() {
     );
   };
 
-  const handlePlaceOrder = () => {
+  const handleConfirmCheckout = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!custName.trim() || !custPhone.trim()) {
+      triggerHaptic("error");
+      toast.error("Please enter Name and Mobile Number");
+      return;
+    }
     if (orderType === "Dine-in" && !tableNo.trim()) {
       triggerHaptic("error");
-      toast.error("Enter your table number first");
+      toast.error("Please enter your Table Number");
+      return;
+    }
+    if (orderType === "Online" && !custAddress.trim()) {
+      triggerHaptic("error");
+      toast.error("Please enter your Delivery Address");
       return;
     }
 
+    setShowCheckout(false);
     triggerHaptic("medium");
     setIsBrewing(true);
     setBrewingStep(0);
@@ -81,12 +118,22 @@ export function CustomerDashboard() {
         triggerHaptic("light");
       } else {
         clearInterval(interval);
-        // Call store placeOrder dynamically
+
+        const resolvedAddress = orderType === "Dine-in"
+          ? `Table ${tableNo}`
+          : orderType === "Online"
+          ? custAddress
+          : `Takeaway (Pickup: ${pickupTime})`;
+
+        // Call store placeOrder dynamically with customer details
         placeOrder(
-          orderType === "Dine-in" ? `Table ${tableNo}` : "Online Guest",
+          custName,
           cart,
-          orderType
+          orderType,
+          custPhone,
+          resolvedAddress
         );
+
         setIsBrewing(false);
         setOrderPlaced(true);
         triggerHaptic("success");
@@ -367,7 +414,10 @@ export function CustomerDashboard() {
                       variant="solid"
                       disabled={cart.length === 0 || isBrewing}
                       className="w-full h-12 rounded-xl text-base"
-                      onClick={handlePlaceOrder}
+                      onClick={() => {
+                        triggerHaptic("medium");
+                        setShowCheckout(true);
+                      }}
                     >
                       <CreditCard size={18} /> Place order · ₹{grandTotal}
                     </NeonButton>
@@ -465,6 +515,174 @@ export function CustomerDashboard() {
                 transition={{ duration: 0.5, ease: "easeInOut" }}
                 className="h-full bg-clay rounded-full"
               />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Checkout Form Modal */}
+      <AnimatePresence>
+        {showCheckout && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-espresso/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-paper border border-line rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-[0_20px_50px_-20px_rgba(44,33,24,0.3)] p-6 md:p-8 text-left"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-display font-semibold text-espresso">
+                  Checkout Details
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic("light");
+                    setShowCheckout(false);
+                  }}
+                  className="w-8 h-8 rounded-full bg-sand flex items-center justify-center text-bark hover:text-espresso transition-colors cursor-pointer border-0"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <form onSubmit={handleConfirmCheckout} className="space-y-4">
+                <div>
+                  <label className="text-xs uppercase tracking-wider text-bark-soft block mb-1.5 font-semibold">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Jane Doe"
+                    value={custName}
+                    onChange={(e) => setCustName(e.target.value)}
+                    className="w-full bg-cream/30 border border-line rounded-xl px-4 py-2.5 text-sm text-espresso focus:outline-none focus:border-clay/60 focus:ring-2 focus:ring-clay/15"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs uppercase tracking-wider text-bark-soft block mb-1.5 font-semibold">
+                    Mobile Number
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="e.g. +91 98765 43210"
+                    value={custPhone}
+                    onChange={(e) => setCustPhone(e.target.value)}
+                    className="w-full bg-cream/30 border border-line rounded-xl px-4 py-2.5 text-sm text-espresso focus:outline-none focus:border-clay/60 focus:ring-2 focus:ring-clay/15"
+                  />
+                </div>
+
+                {orderType === "Dine-in" && (
+                  <div>
+                    <label className="text-xs uppercase tracking-wider text-bark-soft block mb-1.5 font-semibold">
+                      Table Number
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 4"
+                      value={tableNo}
+                      onChange={(e) => setTableNo(e.target.value)}
+                      className="w-full bg-cream/30 border border-line rounded-xl px-4 py-2.5 text-sm text-espresso focus:outline-none focus:border-clay/60 focus:ring-2 focus:ring-clay/15"
+                    />
+                  </div>
+                )}
+
+                {orderType === "Online" && (
+                  <div>
+                    <label className="text-xs uppercase tracking-wider text-bark-soft block mb-1.5 font-semibold">
+                      Delivery Address
+                    </label>
+                    <textarea
+                      required
+                      rows={3}
+                      placeholder="Enter your street address, building, and apartment number"
+                      value={custAddress}
+                      onChange={(e) => setCustAddress(e.target.value)}
+                      className="w-full bg-cream/30 border border-line rounded-xl px-4 py-2.5 text-sm text-espresso focus:outline-none focus:border-clay/60 focus:ring-2 focus:ring-clay/15 resize-none"
+                    />
+                  </div>
+                )}
+
+                {orderType === "Takeaway" && (
+                  <div>
+                    <label className="text-xs uppercase tracking-wider text-bark-soft block mb-1.5 font-semibold">
+                      Estimated Pick-up Time
+                    </label>
+                    <select
+                      value={pickupTime}
+                      onChange={(e) => setPickupTime(e.target.value)}
+                      className="w-full bg-cream/30 border border-line rounded-xl px-4 py-2.5 text-sm text-espresso focus:outline-none focus:border-clay/60 focus:ring-2 focus:ring-clay/15"
+                    >
+                      <option value="In 10 mins">In 10 mins</option>
+                      <option value="In 15 mins">In 15 mins</option>
+                      <option value="In 20 mins">In 20 mins</option>
+                      <option value="In 30 mins">In 30 mins</option>
+                      <option value="In 45 mins">In 45 mins</option>
+                    </select>
+                  </div>
+                )}
+
+                <div className="pt-4 border-t border-line flex gap-3">
+                  <NeonButton
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      triggerHaptic("light");
+                      setShowCheckout(false);
+                    }}
+                    className="flex-1 rounded-xl h-11 border-0"
+                  >
+                    Cancel
+                  </NeonButton>
+                  <NeonButton
+                    type="submit"
+                    variant="solid"
+                    className="flex-1 rounded-xl h-11 border-0"
+                  >
+                    Pay &amp; Brew
+                  </NeonButton>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Telegram Notification (Simulator Popup) */}
+      <AnimatePresence>
+        {tgNotification && (
+          <motion.div
+            initial={{ opacity: 0, y: -50, scale: 0.9, x: 0 }}
+            animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            className="fixed top-4 right-4 z-[100] max-w-sm w-full bg-[#1e2734] border border-[#2b394a] rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.35)] overflow-hidden text-white font-sans text-left"
+          >
+            <div className="bg-[#151e27] px-4 py-3 flex items-center justify-between border-b border-[#2b394a]">
+              <div className="flex items-center gap-2">
+                <span className="w-7 h-7 rounded-full bg-[#2CA5E0] flex items-center justify-center text-white shrink-0">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15.82-1.87 7.9-2.73 8.35-.42.22-.84.28-1.2.22-.72-.11-1.28-.62-1.92-1.07-.46-.33-.92-.66-1.38-1-.46-.34-.92-.68-1.38-1.01l-1.38-.68c-.62-.31-.62-.92.15-1.23l12.31-4.9c.77-.31 1.38.15 1.23 1.32z" />
+                  </svg>
+                </span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#2CA5E0]">Telegram Notification (Simulator)</span>
+              </div>
+              <button onClick={() => setTgNotification(null)} className="text-gray-400 hover:text-white text-xs cursor-pointer bg-transparent border-0 p-1">✕</button>
+            </div>
+            <div className="p-4 whitespace-pre-wrap font-mono text-[11px] text-gray-200 overflow-y-auto max-h-[300px] leading-relaxed select-text bg-[#1e2734]">
+              {tgNotification}
+            </div>
+            <div className="bg-[#151e27] px-4 py-2 text-[10px] text-gray-400 text-center border-t border-[#2b394a]">
+              Sent to Roastery Telegram Bot ☕
             </div>
           </motion.div>
         )}

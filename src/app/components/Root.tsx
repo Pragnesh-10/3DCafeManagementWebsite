@@ -6,8 +6,11 @@ import { Bell, Search, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 function Wordmark() {
+  const userRole = sessionStorage.getItem("user_role");
+  const homePath = userRole === "staff_manager" ? "/manager" : "/admin";
+
   return (
-    <Link to="/admin" className="flex items-center gap-2.5 shrink-0">
+    <Link to={homePath} className="flex items-center gap-2.5 shrink-0">
       <span className="w-9 h-9 rounded-full bg-espresso text-cream flex items-center justify-center shrink-0 shadow-[0_2px_6px_-2px_rgba(44,33,24,0.5)]">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
           <ellipse cx="12" cy="12" rx="7.5" ry="10" transform="rotate(35 12 12)" stroke="currentColor" strokeWidth="1.6" />
@@ -72,10 +75,10 @@ export function Root() {
             />
             <div className="hidden md:block text-left">
               <p className="text-sm leading-tight text-espresso">
-                {sessionStorage.getItem("user_name") || "Priya Nair"}
+                {sessionStorage.getItem("user_role") === "admin" ? "System Administrator" : (sessionStorage.getItem("user_name") || "Priya Nair")}
               </p>
               <p className="text-bark-soft text-xs leading-tight">
-                {sessionStorage.getItem("user_role") === "admin" ? "Store Manager" : "Staff Member"}
+                {sessionStorage.getItem("user_role") === "admin" ? "System Administrator" : "Store Manager"}
               </p>
             </div>
             <button 

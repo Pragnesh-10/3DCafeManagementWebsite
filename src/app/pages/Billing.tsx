@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Card } from "../components/Card";
-import { Download, FileText, CreditCard, Banknote, Smartphone, Loader2 } from "lucide-react";
+import { Download, FileText, CreditCard, Banknote, Smartphone, Loader2, Send } from "lucide-react";
 import { Button as NeonButton } from "../components/ui/neon-button";
 import { triggerHaptic } from "../utils/haptics";
 import { toast } from "sonner";
+import { sendTelegramNotification } from "../utils/store";
 
 const TRANSACTIONS = [
   { id: "INV-2406-118", amount: 540, method: "UPI", status: "Paid", time: "10 min ago" },
@@ -24,6 +25,59 @@ export function Billing() {
   const [isGenerating, setIsGenerating] = useState(false);
   const gst = +(subtotal * 0.05).toFixed(2);
   const total = +(subtotal + gst).toFixed(2);
+
+  // Telegram Alert Settings States
+  const [tgToken, setTgToken] = useState(localStorage.getItem("cardamom_tg_token") || "");
+  const [tgChatId, setTgChatId] = useState(localStorage.getItem("cardamom_tg_chat_id") || "");
+  const [isTesting, setIsTesting] = useState(false);
+
+  const handleSaveTelegram = (e: React.FormEvent) => {
+    e.preventDefault();
+    triggerHaptic("medium");
+    localStorage.setItem("cardamom_tg_token", tgToken);
+    localStorage.setItem("cardamom_tg_chat_id", tgChatId);
+    toast.success("Telegram settings saved successfully!");
+  };
+
+  const handleTestTelegram = async () => {
+    if (!tgToken || !tgChatId) {
+      triggerHaptic("error");
+      toast.error("Please enter both Bot Token and Chat ID first.");
+      return;
+    }
+    setIsTesting(true);
+    triggerHaptic("medium");
+
+    // Temporarily persist to allow direct testing
+    localStorage.setItem("cardamom_tg_token", tgToken);
+    localStorage.setItem("cardamom_tg_chat_id", tgChatId);
+
+    const success = await sendTelegramNotification({
+      id: "TEST-8888",
+      customer: "Test Customer",
+      customerPhone: "+91 98765 43210",
+      customerAddress: "Test Table 5 / Delivery Address",
+      items: [{ name: "Flat White", qty: 2, price: 210 }],
+      status: "Received",
+      type: "Online",
+      time: "Just now",
+      total: 441,
+      timestamp: Date.now()
+    }, true);
+
+    setIsTesting(false);
+    if (success) {
+      triggerHaptic("success");
+      toast.success("Telegram test message sent successfully!", {
+        description: "Check your Telegram chat / group channel."
+      });
+    } else {
+      triggerHaptic("error");
+      toast.error("Failed to send test alert.", {
+        description: "Please check your Bot Token and Chat ID configurations."
+      });
+    }
+  };
 
   const handleExport = () => {
     triggerHaptic("medium");
@@ -97,56 +151,118 @@ export function Billing() {
           </div>
         </Card>
 
-        <Card raised>
-          <h3 className="text-lg text-espresso mb-4">Quick invoice</h3>
-          <form id="invoice-form" onSubmit={handleGenerateInvoice} className="space-y-4">
-            <div>
-              <label className="text-xs text-bark mb-1.5 block">Customer / table</label>
-              <input 
-                type="text" 
-                placeholder="e.g. Table 4" 
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full bg-paper-raised border border-line rounded-lg px-3 py-2 text-sm text-espresso placeholder:text-bark-soft focus:outline-none focus:border-clay/60 focus:ring-2 focus:ring-clay/15" 
-              />
-            </div>
-            <div>
-              <label className="text-xs text-bark mb-1.5 block">Amount (₹)</label>
-              <input
-                type="number"
-                min={0}
-                placeholder="0"
-                value={subtotal || ""}
-                onChange={(e) => setSubtotal(Number(e.target.value) || 0)}
-                className="w-full bg-paper-raised border border-line rounded-lg px-3 py-2 text-sm font-mono text-espresso placeholder:text-bark-soft focus:outline-none focus:border-clay/60 focus:ring-2 focus:ring-clay/15"
-              />
-            </div>
-            <div className="pt-3 border-t border-line space-y-2">
-              <Row label="Subtotal" value={subtotal} />
-              <Row label="GST (5%)" value={gst} />
-              <div className="flex justify-between pt-2 border-t border-line">
-                <span className="text-espresso">Total</span>
-                <span className="font-mono text-espresso">₹{total.toLocaleString("en-IN")}</span>
+        <div className="space-y-6">
+          <Card raised>
+            <h3 className="text-lg text-espresso mb-4">Quick invoice</h3>
+            <form id="invoice-form" onSubmit={handleGenerateInvoice} className="space-y-4">
+              <div>
+                <label className="text-xs text-bark mb-1.5 block">Customer / table</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Table 4" 
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="w-full bg-paper-raised border border-line rounded-lg px-3 py-2 text-sm text-espresso placeholder:text-bark-soft focus:outline-none focus:border-clay/60 focus:ring-2 focus:ring-clay/15" 
+                />
               </div>
-              <NeonButton 
-                type="submit" 
-                variant="solid" 
-                disabled={isGenerating} 
-                className="mt-2 w-full flex items-center justify-center gap-2"
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" /> Printing...
-                  </>
-                ) : (
-                  <>
-                    <FileText size={16} /> Generate invoice
-                  </>
-                )}
-              </NeonButton>
+              <div>
+                <label className="text-xs text-bark mb-1.5 block">Amount (₹)</label>
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="0"
+                  value={subtotal || ""}
+                  onChange={(e) => setSubtotal(Number(e.target.value) || 0)}
+                  className="w-full bg-paper-raised border border-line rounded-lg px-3 py-2 text-sm font-mono text-espresso placeholder:text-bark-soft focus:outline-none focus:border-clay/60 focus:ring-2 focus:ring-clay/15"
+                />
+              </div>
+              <div className="pt-3 border-t border-line space-y-2">
+                <Row label="Subtotal" value={subtotal} />
+                <Row label="GST (5%)" value={gst} />
+                <div className="flex justify-between pt-2 border-t border-line text-espresso font-semibold">
+                  <span className="text-espresso">Total</span>
+                  <span className="font-mono text-espresso">₹{total.toLocaleString("en-IN")}</span>
+                </div>
+                <NeonButton 
+                  type="submit" 
+                  variant="solid" 
+                  disabled={isGenerating} 
+                  className="mt-2 w-full flex items-center justify-center gap-2 border-0"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" /> Printing...
+                    </>
+                  ) : (
+                    <>
+                      <FileText size={16} /> Generate invoice
+                    </>
+                  )}
+                </NeonButton>
+              </div>
+            </form>
+          </Card>
+
+          <Card raised>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="w-7 h-7 rounded-lg bg-[#2CA5E0]/10 text-[#2CA5E0] flex items-center justify-center shrink-0">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15.82-1.87 7.9-2.73 8.35-.42.22-.84.28-1.2.22-.72-.11-1.28-.62-1.92-1.07-.46-.33-.92-.66-1.38-1-.46-.34-.92-.68-1.38-1.01l-1.38-.68c-.62-.31-.62-.92.15-1.23l12.31-4.9c.77-.31 1.38.15 1.23 1.32z" />
+                </svg>
+              </span>
+              <h3 className="text-lg text-espresso">Telegram Alerts</h3>
             </div>
-          </form>
-        </Card>
+            <p className="text-xs text-bark-soft mb-4">
+              Send instant order details, customer mobile numbers, and delivery addresses directly to your staff managers.
+            </p>
+
+            <form onSubmit={handleSaveTelegram} className="space-y-4">
+              <div>
+                <label className="text-xs text-bark mb-1.5 block font-semibold">Bot Token</label>
+                <input
+                  type="password"
+                  placeholder="e.g. 5234567890:AAH..."
+                  value={tgToken}
+                  onChange={(e) => setTgToken(e.target.value)}
+                  className="w-full bg-paper-raised border border-line rounded-lg px-3 py-2 text-xs text-espresso placeholder:text-bark-soft focus:outline-none focus:border-clay/60 focus:ring-2 focus:ring-clay/15"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-bark mb-1.5 block font-semibold">Chat ID</label>
+                <input
+                  type="text"
+                  placeholder="e.g. -1001234567890"
+                  value={tgChatId}
+                  onChange={(e) => setTgChatId(e.target.value)}
+                  className="w-full bg-paper-raised border border-line rounded-lg px-3 py-2 text-xs font-mono text-espresso placeholder:text-bark-soft focus:outline-none focus:border-clay/60 focus:ring-2 focus:ring-clay/15"
+                />
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <NeonButton
+                  type="submit"
+                  variant="solid"
+                  className="flex-1 text-xs h-10 rounded-lg border-0"
+                >
+                  Save
+                </NeonButton>
+                <NeonButton
+                  type="button"
+                  variant="outline"
+                  disabled={isTesting}
+                  onClick={handleTestTelegram}
+                  className="flex-1 text-xs h-10 rounded-lg border-0 flex items-center justify-center gap-1.5"
+                >
+                  {isTesting ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <>Test Alert</>
+                  )}
+                </NeonButton>
+              </div>
+            </form>
+          </Card>
+        </div>
       </div>
     </div>
   );

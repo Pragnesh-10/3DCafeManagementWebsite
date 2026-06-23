@@ -67,13 +67,13 @@ export function Login() {
           const userRole = data.user.user_metadata?.role || (email.includes("admin") ? "admin" : "customer");
           const userName = data.user.user_metadata?.full_name || data.user.email?.split("@")[0] || "User";
           
-          sessionStorage.setItem("user_role", userRole);
+          sessionStorage.setItem("user_role", userRole === "admin" ? "staff_manager" : userRole);
           sessionStorage.setItem("user_name", userName);
           triggerHaptic("success");
           toast.success(`Welcome back, ${userName}!`);
           
-          if (userRole === "admin") {
-            navigate("/admin");
+          if (userRole === "admin" || userRole === "staff_manager") {
+            navigate("/manager");
           } else {
             navigate("/order");
           }
@@ -83,14 +83,14 @@ export function Login() {
         const nameFromEmail = email.split("@")[0];
         const formattedName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
         
-        sessionStorage.setItem("user_role", role);
-        sessionStorage.setItem("user_name", role === "admin" ? "Store Manager" : formattedName || "Guest Explorer");
+        sessionStorage.setItem("user_role", role === "admin" ? "staff_manager" : role);
+        sessionStorage.setItem("user_name", role === "admin" ? formattedName || "Store Manager" : formattedName || "Guest Explorer");
         triggerHaptic("success");
         toast.info("Running in offline / mock mode.");
-        toast.success(`Logged in as ${role === "admin" ? "Staff" : "Customer"}!`);
+        toast.success(`Logged in as ${role === "admin" ? "Staff Manager" : "Customer"}!`);
         
         if (role === "admin") {
-          navigate("/admin");
+          navigate("/manager");
         } else {
           navigate("/order");
         }
@@ -197,17 +197,21 @@ export function Login() {
                 <span className="text-xs font-semibold uppercase tracking-widest text-clay">
                   {role === "admin" ? "Staff" : "Customer"}
                 </span>
-                <span className="text-xs text-line">|</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    triggerHaptic("light");
-                    setIsSignUp(!isSignUp);
-                  }}
-                  className="text-xs text-clay hover:text-espresso font-semibold cursor-pointer"
-                >
-                  {isSignUp ? "Switch to Login" : "Switch to Register"}
-                </button>
+                {role !== "admin" && (
+                  <>
+                    <span className="text-xs text-line">|</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic("light");
+                        setIsSignUp(!isSignUp);
+                      }}
+                      className="text-xs text-clay hover:text-espresso font-semibold cursor-pointer"
+                    >
+                      {isSignUp ? "Switch to Login" : "Switch to Register"}
+                    </button>
+                  </>
+                )}
               </div>
 
               {isSignUp && (
@@ -295,16 +299,18 @@ export function Login() {
                       </button>
                     </>
                   ) : (
-                    <>
-                      Don't have an account?{" "}
-                      <button
-                        type="button"
-                        onClick={() => { triggerHaptic("light"); setIsSignUp(true); }}
-                        className="text-clay hover:underline font-semibold cursor-pointer bg-transparent border-0 p-0"
-                      >
-                        Join the Bean Club
-                      </button>
-                    </>
+                    role !== "admin" && (
+                      <>
+                        Don't have an account?{" "}
+                        <button
+                          type="button"
+                          onClick={() => { triggerHaptic("light"); setIsSignUp(true); }}
+                          className="text-clay hover:underline font-semibold cursor-pointer bg-transparent border-0 p-0"
+                        >
+                          Join the Bean Club
+                        </button>
+                      </>
+                    )
                   )}
                 </p>
               </div>
