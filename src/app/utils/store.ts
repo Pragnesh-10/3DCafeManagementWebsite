@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from "./supabase";
 
 export type OrderStatus = "Received" | "Preparing" | "Ready" | "Served";
 export type OrderType = "Dine-in" | "Takeaway" | "Online";
@@ -194,7 +195,7 @@ export function writeStoreData(data: ReturnType<typeof getStoreData>) {
   window.dispatchEvent(new Event(STORE_EVENT));
 }
 
-// Custom hook for unified café state
+// Custom hook for unified café state with Supabase sync
 export function useCafeStore() {
   const [data, setData] = useState(getStoreData());
 
@@ -207,6 +208,89 @@ export function useCafeStore() {
     return () => {
       window.removeEventListener(STORE_EVENT, handler);
       window.removeEventListener("storage", handler);
+    };
+  }, []);
+
+  // Sync state from Supabase once on mount and subscribe to realtime updates
+  useEffect(() => {
+    if (!supabase) return;
+
+    const syncFromSupabase = async () => {
+      try {
+        const [ordersRes, invRes, txRes, custRes, empRes] = await Promise.all([
+          supabase.from("orders").select("*").order("timestamp", { ascending: false }),
+          supabase.from("inventory").select("*"),
+          supabase.from("transactions").select("*").order("timestamp", { ascending: false }),
+          supabase.from("customers").select("*").order("spent", { ascending: false }),
+          supabase.from("employees").select("*")
+        ]);
+
+        const store = getStoreData();
+
+        if (ordersRes.data && ordersRes.data.length > 0) {
+          store.orders = ordersRes.data as Order[];
+        }
+        if (invRes.data && invRes.data.length > 0) {
+          store.inventory = invRes.data.map((i: any) => ({
+            id: i.id,
+            item: i.item,
+            category: i.category,
+            stock: Number(i.stock),
+            unit: i.unit,
+            minStock: Number(i.min_stock),
+            status: i.status as "Good" | "Low" | "Critical",
+            trend: i.trend as "up" | "down" | "stable",
+          }));
+        }
+        if (txRes.data && txRes.data.length > 0) {
+          store.transactions = txRes.data.map((t: any) => ({
+            id: t.id,
+            amount: Number(t.amount),
+            method: t.method as "UPI" | "Card" | "Cash",
+            status: t.status as "Paid" | "Pending",
+            time: t.time,
+            timestamp: Number(t.timestamp),
+            customer: t.customer,
+            itemsSummary: t.items_summary,
+          }));
+        }
+        if (custRes.data && custRes.data.length > 0) {
+          store.customers = custRes.data.map((c: any) => ({
+            name: c.name,
+            visits: Number(c.visits),
+            spent: Number(c.spent),
+            tier: c.tier as "Gold" | "Silver" | "Bronze",
+            lastVisit: c.last_visit,
+          }));
+        }
+        if (empRes.data && empRes.data.length > 0) {
+          store.employees = empRes.data.map((e: any) => ({
+            name: e.name,
+            role: e.role,
+            shift: e.shift,
+            status: e.status as "On shift" | "Upcoming" | "Off shift",
+            score: Number(e.score),
+          }));
+        }
+
+        writeStoreData(store);
+      } catch (err) {
+        console.warn("Failed to sync initial data from Supabase, table might not exist yet:", err);
+      }
+    };
+
+    syncFromSupabase();
+
+    // Subscribe to schema changes (Insert, Update, Delete) to enable Realtime
+    const channel = supabase
+      .channel("schema-db-changes")
+      .on("postgres_changes", { event: "*", schema: "public" }, () => {
+        syncFromSupabase();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
     };
   }, []);
 
@@ -239,6 +323,13 @@ export function useCafeStore() {
 
     store.orders = [newOrder, ...store.orders];
 
+    // Push to Supabase if connected
+    if (supabase) {
+      supabase.from("orders").insert([newOrder]).then(({ error }) => {
+        if (error) console.error("Supabase placeOrder error:", error);
+      });
+    }
+
     // 2. Deduct inventory
     items.forEach(({ item, qty }) => {
       const recipe = RECIPES[item.name];
@@ -249,6 +340,16 @@ export function useCafeStore() {
             invItem.stock = Math.max(0, parseFloat((invItem.stock - recipeQty * qty).toFixed(3)));
             invItem.status = getInventoryStatus(invItem.stock, invItem.minStock);
             invItem.trend = "down";
+
+            if (supabase) {
+              supabase.from("inventory").update({
+                stock: invItem.stock,
+                status: invItem.status,
+                trend: "down"
+              }).eq("id", itemId).then(({ error }) => {
+                if (error) console.error("Supabase deduct inventory error:", error);
+              });
+            }
           }
         });
       }
@@ -260,6 +361,16 @@ export function useCafeStore() {
           cupItem.stock = Math.max(0, cupItem.stock - qty);
           cupItem.status = getInventoryStatus(cupItem.stock, cupItem.minStock);
           cupItem.trend = "down";
+
+          if (supabase) {
+            supabase.from("inventory").update({
+              stock: cupItem.stock,
+              status: cupItem.status,
+              trend: "down"
+            }).eq("id", "INV-008").then(({ error }) => {
+              if (error) console.error("Supabase cup inventory error:", error);
+            });
+          }
         }
       }
     });
@@ -271,18 +382,40 @@ export function useCafeStore() {
       cust.spent += gstTotal;
       cust.tier = cust.spent > 15000 ? "Gold" : cust.spent > 5000 ? "Silver" : "Bronze";
       cust.lastVisit = "Today";
+
+      if (supabase) {
+        supabase.from("customers").upsert([{
+          name: cust.name,
+          visits: cust.visits,
+          spent: cust.spent,
+          tier: cust.tier,
+          last_visit: cust.lastVisit
+        }]).then(({ error }) => {
+          if (error) console.error("Supabase update customer stats error:", error);
+        });
+      }
     } else if (customer.trim() !== "" && !customer.includes("Table") && !customer.includes("Rider")) {
       // Create new customer
-      store.customers = [
-        ...store.customers,
-        {
-          name: customer,
-          visits: 1,
-          spent: gstTotal,
-          tier: gstTotal > 5000 ? "Silver" : "Bronze",
-          lastVisit: "Today",
-        },
-      ];
+      const newCustomer: Customer = {
+        name: customer,
+        visits: 1,
+        spent: gstTotal,
+        tier: gstTotal > 5000 ? "Silver" : "Bronze",
+        lastVisit: "Today",
+      };
+      store.customers = [...store.customers, newCustomer];
+
+      if (supabase) {
+        supabase.from("customers").insert([{
+          name: newCustomer.name,
+          visits: newCustomer.visits,
+          spent: newCustomer.spent,
+          tier: newCustomer.tier,
+          last_visit: newCustomer.lastVisit
+        }]).then(({ error }) => {
+          if (error) console.error("Supabase insert new customer error:", error);
+        });
+      }
     }
 
     writeStoreData(store);
@@ -295,6 +428,12 @@ export function useCafeStore() {
       if (o.id === orderId) {
         const updated = { ...o, status: nextStatus };
         
+        if (supabase) {
+          supabase.from("orders").update({ status: nextStatus }).eq("id", orderId).then(({ error }) => {
+            if (error) console.error("Supabase advanceOrderStatus error:", error);
+          });
+        }
+
         // If advanced to Served, automatically generate a transaction!
         if (nextStatus === "Served") {
           const txId = `INV-${new Date().getFullYear().toString().substring(2)}${(new Date().getMonth() + 1).toString().padStart(2, "0")}-${100 + store.transactions.length}`;
@@ -310,6 +449,21 @@ export function useCafeStore() {
             itemsSummary,
           };
           store.transactions = [newTx, ...store.transactions];
+
+          if (supabase) {
+            supabase.from("transactions").insert([{
+              id: newTx.id,
+              amount: newTx.amount,
+              method: newTx.method,
+              status: newTx.status,
+              time: newTx.time,
+              timestamp: newTx.timestamp,
+              customer: newTx.customer,
+              items_summary: newTx.itemsSummary
+            }]).then(({ error }) => {
+              if (error) console.error("Supabase insert transaction error:", error);
+            });
+          }
         }
         return updated;
       }
@@ -321,6 +475,13 @@ export function useCafeStore() {
   const cancelOrder = (orderId: string) => {
     const store = getStoreData();
     store.orders = store.orders.filter((o) => o.id !== orderId);
+    
+    if (supabase) {
+      supabase.from("orders").delete().eq("id", orderId).then(({ error }) => {
+        if (error) console.error("Supabase cancelOrder error:", error);
+      });
+    }
+
     writeStoreData(store);
   };
 
@@ -329,10 +490,22 @@ export function useCafeStore() {
     store.inventory = store.inventory.map((item) => {
       if (item.id === itemId) {
         const newStock = parseFloat((item.stock + qty).toFixed(2));
+        const updatedStatus = getInventoryStatus(newStock, item.minStock);
+
+        if (supabase) {
+          supabase.from("inventory").update({
+            stock: newStock,
+            status: updatedStatus,
+            trend: "up"
+          }).eq("id", itemId).then(({ error }) => {
+            if (error) console.error("Supabase restockInventory error:", error);
+          });
+        }
+
         return {
           ...item,
           stock: newStock,
-          status: getInventoryStatus(newStock, item.minStock),
+          status: updatedStatus,
           trend: "up" as const,
         };
       }
@@ -355,6 +528,21 @@ export function useCafeStore() {
       itemsSummary: "Counter order",
     };
     store.transactions = [newTx, ...store.transactions];
+
+    if (supabase) {
+      supabase.from("transactions").insert([{
+        id: newTx.id,
+        amount: newTx.amount,
+        method: newTx.method,
+        status: newTx.status,
+        time: newTx.time,
+        timestamp: newTx.timestamp,
+        customer: newTx.customer,
+        items_summary: newTx.itemsSummary
+      }]).then(({ error }) => {
+        if (error) console.error("Supabase addManualInvoice error:", error);
+      });
+    }
     
     // Also increment customer metrics
     if (customer && customer.trim() !== "") {
@@ -364,17 +552,39 @@ export function useCafeStore() {
         cust.spent += amount;
         cust.tier = cust.spent > 15000 ? "Gold" : cust.spent > 5000 ? "Silver" : "Bronze";
         cust.lastVisit = "Today";
+
+        if (supabase) {
+          supabase.from("customers").upsert([{
+            name: cust.name,
+            visits: cust.visits,
+            spent: cust.spent,
+            tier: cust.tier,
+            last_visit: cust.lastVisit
+          }]).then(({ error }) => {
+            if (error) console.error("Supabase upsert customer invoice error:", error);
+          });
+        }
       } else {
-        store.customers = [
-          ...store.customers,
-          {
-            name: customer,
-            visits: 1,
-            spent: amount,
-            tier: amount > 5000 ? "Silver" : "Bronze",
-            lastVisit: "Today",
-          },
-        ];
+        const newCustomer: Customer = {
+          name: customer,
+          visits: 1,
+          spent: amount,
+          tier: amount > 5000 ? "Silver" : "Bronze",
+          lastVisit: "Today",
+        };
+        store.customers = [...store.customers, newCustomer];
+
+        if (supabase) {
+          supabase.from("customers").insert([{
+            name: newCustomer.name,
+            visits: newCustomer.visits,
+            spent: newCustomer.spent,
+            tier: newCustomer.tier,
+            last_visit: newCustomer.lastVisit
+          }]).then(({ error }) => {
+            if (error) console.error("Supabase insert customer invoice error:", error);
+          });
+        }
       }
     }
     
@@ -387,6 +597,15 @@ export function useCafeStore() {
     store.employees = store.employees.map((emp) => {
       if (emp.name === name) {
         const nextStatus = emp.status === "On shift" ? "Off shift" : "On shift";
+
+        if (supabase) {
+          supabase.from("employees").update({
+            status: nextStatus
+          }).eq("name", name).then(({ error }) => {
+            if (error) console.error("Supabase toggleEmployeeShift error:", error);
+          });
+        }
+
         return { ...emp, status: nextStatus as "On shift" | "Off shift" };
       }
       return emp;

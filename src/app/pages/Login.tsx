@@ -1,45 +1,111 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowLeft, ArrowRight, User, ShieldCheck, Mail, Lock, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, User, ShieldCheck, Mail, Lock, Loader2, UserPlus } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "../components/ui/neon-button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
+import { supabase } from "../utils/supabase";
 
 export function Login() {
   const navigate = useNavigate();
   const [role, setRole] = useState<"admin" | "customer" | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    if (isSignUp) {
+      // 1. Sign Up Flow
+      if (supabase) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName || "Guest Explorer",
+              role: role || "customer"
+            }
+          }
+        });
 
-    if (role === "admin") {
-      // Mock admin credentials
-      if (email === "admin@cardamom.com" && password === "admin123") {
-        sessionStorage.setItem("user_role", "admin");
-        sessionStorage.setItem("user_name", "Priya Nair");
-        toast.success("Welcome back, Priya!");
-        navigate("/admin");
+        if (error) {
+          toast.error(error.message);
+        } else if (data?.user) {
+          toast.success("Successfully registered! Please log in.");
+          setIsSignUp(false);
+          setPassword("");
+        }
       } else {
-        toast.error("Invalid admin credentials. Use admin@cardamom.com / admin123");
+        toast.info("Offline / Mock mode: Supabase is not configured. Account registration simulated.");
+        toast.success("Mock sign up complete! You can now log in using standard credentials.");
+        setIsSignUp(false);
+        setPassword("");
       }
     } else {
-      // Mock customer credentials
-      if (email === "hello@guest.com" && password === "guest123") {
-        sessionStorage.setItem("user_role", "customer");
-        sessionStorage.setItem("user_name", "Guest Explorer");
-        toast.success("Welcome to Cardamom!");
-        navigate("/order");
+      // 2. Sign In Flow
+      if (supabase) {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          // Fallback to mock credentials if Supabase check fails but user is testing demo accounts
+          if (role === "admin" && email === "admin@cardamom.com" && password === "admin123") {
+            sessionStorage.setItem("user_role", "admin");
+            sessionStorage.setItem("user_name", "Priya Nair");
+            toast.success("Welcome back (Demo Admin)!");
+            navigate("/admin");
+          } else if (role === "customer" && email === "hello@guest.com" && password === "guest123") {
+            sessionStorage.setItem("user_role", "customer");
+            sessionStorage.setItem("user_name", "Guest Explorer");
+            toast.success("Welcome to Cardamom (Demo Customer)!");
+            navigate("/order");
+          } else {
+            toast.error(error.message);
+          }
+        } else if (data?.user) {
+          const userRole = data.user.user_metadata?.role || (email.includes("admin") ? "admin" : "customer");
+          const userName = data.user.user_metadata?.full_name || data.user.email?.split("@")[0] || "User";
+          
+          sessionStorage.setItem("user_role", userRole);
+          sessionStorage.setItem("user_name", userName);
+          toast.success(`Welcome back, ${userName}!`);
+          
+          if (userRole === "admin") {
+            navigate("/admin");
+          } else {
+            navigate("/order");
+          }
+        }
       } else {
-        toast.error("Invalid credentials. Use hello@guest.com / guest123");
+        // Fallback mock check when Supabase is completely unconfigured
+        if (role === "admin") {
+          if (email === "admin@cardamom.com" && password === "admin123") {
+            sessionStorage.setItem("user_role", "admin");
+            sessionStorage.setItem("user_name", "Priya Nair");
+            toast.success("Welcome back, Priya!");
+            navigate("/admin");
+          } else {
+            toast.error("Invalid admin credentials. Use admin@cardamom.com / admin123");
+          }
+        } else {
+          if (email === "hello@guest.com" && password === "guest123") {
+            sessionStorage.setItem("user_role", "customer");
+            sessionStorage.setItem("user_name", "Guest Explorer");
+            toast.success("Welcome to Cardamom!");
+            navigate("/order");
+          } else {
+            toast.error("Invalid credentials. Use hello@guest.com / guest123");
+          }
+        }
       }
     }
     setIsLoading(false);
@@ -64,8 +130,12 @@ export function Login() {
               <path d="M8 5C12 9 12 15 16 19" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
             </svg>
           </div>
-          <h1 className="text-3xl text-espresso mb-2">Welcome Back</h1>
-          <p className="text-bark text-sm">Choose your portal to continue</p>
+          <h1 className="text-3xl text-espresso mb-2">
+            {isSignUp ? "Join the Club" : "Welcome Back"}
+          </h1>
+          <p className="text-bark text-sm">
+            {isSignUp ? "Create your Cardamom account" : "Choose your portal to continue"}
+          </p>
         </div>
 
         <AnimatePresence mode="wait">
@@ -111,22 +181,51 @@ export function Login() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              onSubmit={handleLogin}
+              onSubmit={handleAuth}
               className="space-y-6"
             >
               <div className="flex items-center gap-2 mb-4">
                 <button
                   type="button"
-                  onClick={() => setRole(null)}
+                  onClick={() => {
+                    setRole(null);
+                    setIsSignUp(false);
+                  }}
                   className="text-xs text-bark-soft hover:text-espresso underline underline-offset-4"
                 >
                   Change role
                 </button>
                 <span className="text-xs text-line">|</span>
                 <span className="text-xs font-semibold uppercase tracking-widest text-clay">
-                  {role === "admin" ? "Staff" : "Guest"}
+                  {role === "admin" ? "Staff" : "Customer"}
                 </span>
+                <span className="text-xs text-line">|</span>
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="text-xs text-clay hover:text-espresso font-semibold"
+                >
+                  {isSignUp ? "Switch to Login" : "Switch to Register"}
+                </button>
               </div>
+
+              {isSignUp && (
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <div className="relative">
+                    <UserPlus className="absolute left-3 top-1/2 -translate-y-1/2 text-bark-soft" size={16} />
+                    <Input
+                      id="fullName"
+                      type="text"
+                      placeholder="Jane Doe"
+                      required
+                      className="pl-10"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email address</Label>
@@ -147,7 +246,9 @@ export function Login() {
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <Label htmlFor="password">Password</Label>
-                  <button type="button" className="text-xs text-bark-soft hover:text-clay">Forgot?</button>
+                  {!isSignUp && (
+                    <button type="button" className="text-xs text-bark-soft hover:text-clay">Forgot?</button>
+                  )}
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-bark-soft" size={16} />
@@ -167,13 +268,37 @@ export function Login() {
                 {isLoading ? (
                   <Loader2 className="animate-spin" />
                 ) : (
-                  `Sign in as ${role === "admin" ? "Manager" : "Customer"}`
+                  isSignUp
+                    ? `Sign up as ${role === "admin" ? "Manager" : "Customer"}`
+                    : `Sign in as ${role === "admin" ? "Manager" : "Customer"}`
                 )}
               </Button>
 
               <div className="text-center pt-4 border-t border-line/60">
                 <p className="text-xs text-bark-soft">
-                  Don't have an account? <button type="button" className="text-clay hover:underline font-semibold">Join the Bean Club</button>
+                  {isSignUp ? (
+                    <>
+                      Already have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => setIsSignUp(false)}
+                        className="text-clay hover:underline font-semibold"
+                      >
+                        Sign In
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      Don't have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => setIsSignUp(true)}
+                        className="text-clay hover:underline font-semibold"
+                      >
+                        Join the Bean Club
+                      </button>
+                    </>
+                  )}
                 </p>
               </div>
             </motion.form>
