@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowLeft, ArrowRight, User, ShieldCheck, Mail, Lock, Loader2, UserPlus } from "lucide-react";
+import { ArrowLeft, ArrowRight, User, ShieldCheck, Mail, Lock, Loader2, UserPlus, ChefHat } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "../components/ui/neon-button";
 import { Input } from "../components/ui/input";
@@ -170,6 +170,23 @@ export function Login() {
                   <p className="text-xs text-bark-soft">Manage roastery, orders, and team</p>
                 </div>
                 <ArrowRight className="ml-auto text-bark-soft group-hover:text-espresso transition-colors" size={20} />
+              </button>
+
+              <button
+                onClick={() => {
+                  triggerHaptic("medium");
+                  navigate("/chef");
+                }}
+                className="group flex items-center gap-5 p-5 bg-sand/30 border border-line rounded-2xl hover:border-clay/50 hover:bg-sand/50 transition-all text-left cursor-pointer"
+              >
+                <div className="w-12 h-12 rounded-xl bg-paper flex items-center justify-center text-clay group-hover:scale-110 transition-transform">
+                  <ChefHat size={24} />
+                </div>
+                <div>
+                  <h3 className="text-espresso font-semibold">Kitchen &amp; Floor Board</h3>
+                  <p className="text-xs text-bark-soft">Chef's KDS &amp; Waiter Table Floor View</p>
+                </div>
+                <ArrowRight className="ml-auto text-bark-soft group-hover:text-clay transition-colors" size={20} />
               </button>
             </motion.div>
           ) : (

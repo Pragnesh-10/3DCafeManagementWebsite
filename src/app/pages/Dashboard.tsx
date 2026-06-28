@@ -3,9 +3,11 @@ import { Card } from "../components/Card";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar,
 } from "recharts";
-import { TrendingUp, Users, IndianRupee, Coffee, ArrowUpRight } from "lucide-react";
+import { TrendingUp, Users, IndianRupee, Coffee, ArrowUpRight, Star, AlertTriangle, ShieldCheck, Heart, ArrowDownRight, Package } from "lucide-react";
 import { useCafeStore } from "../utils/store";
 import { Navigate } from "react-router";
+import { toast } from "sonner";
+import { triggerHaptic } from "../utils/haptics";
 
 const salesData = [
   { time: "8a", actual: 1200, forecast: 1300 },
@@ -38,7 +40,7 @@ const tooltipStyle = {
 
 export function Dashboard() {
   const [mounted, setMounted] = useState(false);
-  const { orders, transactions, customers } = useCafeStore();
+  const { orders, transactions, customers, feedbacks, employees, inventory, restockInventory } = useCafeStore();
 
   useEffect(() => setMounted(true), []);
 
@@ -177,6 +179,130 @@ export function Dashboard() {
             </ul>
           </Card>
         </div>
+      </div>
+
+      {/* ── SECTION: EXECUTIVE CRM & PERFORMANCE HUB ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 pt-2">
+        {/* Customer Reviews & Star Ratings */}
+        <Card className="flex flex-col h-[350px]">
+          <div className="flex justify-between items-baseline mb-4">
+            <div>
+              <h3 className="text-lg text-espresso font-semibold">Guest Sentiment</h3>
+              <p className="text-xs text-bark-soft">Live feedback from Cardamom customers</p>
+            </div>
+            {feedbacks && feedbacks.length > 0 && (
+              <div className="flex items-center gap-1 bg-honey/10 px-2 py-1 rounded-lg text-honey font-bold text-xs">
+                <Star size={13} className="fill-honey text-honey" />
+                {(feedbacks.reduce((s, f) => s + f.rating, 0) / feedbacks.length).toFixed(1)} / 5.0
+              </div>
+            )}
+          </div>
+          <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+            {(!feedbacks || feedbacks.length === 0) ? (
+              <p className="text-xs text-bark-soft italic text-center py-16">No feedback received today.</p>
+            ) : (
+              feedbacks.map((fb) => (
+                <div key={fb.id} className="border border-line/60 rounded-xl p-3 bg-sand/10 space-y-1.5 text-xs text-bark">
+                  <div className="flex justify-between items-baseline">
+                    <span className="font-semibold text-espresso">{fb.customerName}</span>
+                    <div className="flex gap-0.5">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star key={i} size={10} className={i < fb.rating ? "fill-honey text-honey" : "text-line"} />
+                      ))}
+                    </div>
+                  </div>
+                  <p className="italic text-[11px] leading-relaxed text-bark-soft">"{fb.comment}"</p>
+                  <div className="flex justify-between items-center text-[9px] text-bark-soft uppercase tracking-wider font-mono">
+                    <span>Order #{fb.orderId}</span>
+                    <span>{new Date(fb.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
+
+        {/* Employee Leaderboard */}
+        <Card className="flex flex-col h-[350px]">
+          <div>
+            <h3 className="text-lg text-espresso font-semibold">Barista Performance</h3>
+            <p className="text-xs text-bark-soft">Team scores &amp; shift stats</p>
+          </div>
+          <div className="flex-1 overflow-y-auto space-y-3 mt-4 pr-1 custom-scrollbar">
+            {employees.map((emp) => (
+              <div key={emp.name} className="flex items-center justify-between border border-line/60 rounded-xl p-3 bg-sand/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-sand/50 text-espresso font-bold flex items-center justify-center text-sm uppercase">
+                    {emp.name.split(" ").map(w => w[0]).join("")}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-espresso leading-tight">{emp.name}</h4>
+                    <span className="text-[10px] text-bark-soft leading-none">{emp.role} · {emp.shift}</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="font-mono text-sm font-bold text-clay">{emp.score}</span>
+                  <span className="block text-[8px] uppercase tracking-wider font-bold text-sage">{emp.status}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Restocking Assistant */}
+        <Card className="flex flex-col h-[350px] justify-between">
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg text-espresso font-semibold">Smart Stock Assistant</h3>
+              <p className="text-xs text-bark-soft">Auto-calculates optimal restock buffers</p>
+            </div>
+            
+            <div className="space-y-2.5 max-h-[190px] overflow-y-auto pr-1 custom-scrollbar">
+              {inventory
+                .filter((item) => item.status === "Critical" || item.status === "Low")
+                .map((item) => {
+                  const optimalBuffer = Math.ceil((item.minStock * 2) - item.stock);
+                  return (
+                    <div key={item.id} className="flex justify-between items-center border border-line/60 rounded-xl p-2.5 bg-cream/40 text-xs">
+                      <div>
+                        <span className="font-semibold text-espresso">{item.item}</span>
+                        <p className="text-[10px] text-berry font-medium mt-0.5">
+                          Stock: {item.stock} {item.unit} (Min: {item.minStock})
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-mono font-bold text-clay">+{optimalBuffer} {item.unit}</span>
+                        <span className="block text-[8px] text-bark-soft">Restock Target</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              {inventory.filter((item) => item.status === "Critical" || item.status === "Low").length === 0 && (
+                <div className="py-12 text-center text-xs text-sage font-medium bg-sage/5 border border-sage/10 p-4 rounded-2xl">
+                  ✨ Stock quantities are optimal. No restock recommended.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {inventory.filter((item) => item.status === "Critical" || item.status === "Low").length > 0 && (
+            <button
+              onClick={() => {
+                triggerHaptic("success");
+                inventory
+                  .filter((item) => item.status === "Critical" || item.status === "Low")
+                  .forEach((item) => {
+                    const optimalBuffer = Math.ceil((item.minStock * 2) - item.stock);
+                    restockInventory(item.id, optimalBuffer);
+                  });
+                toast.success("Successfully restocked raw material stock buffers!");
+              }}
+              className="w-full mt-3 py-2.5 bg-espresso text-cream hover:bg-clay text-xs font-semibold uppercase tracking-wider rounded-full cursor-pointer transition-colors"
+            >
+              One-Click RESTOCK ALL WARNINGS
+            </button>
+          )}
+        </Card>
       </div>
     </div>
   );

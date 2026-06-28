@@ -17,10 +17,14 @@ export function Inventory() {
   const [isSyncing, setIsSyncing] = useState(false);
   const { inventory, restockInventory } = useCafeStore();
 
-  const rows = inventory.filter((r) => r.item.toLowerCase().includes(query.toLowerCase()));
+  const rows = inventory.filter(
+    (r) => r.id !== "settings_telegram" && r.item.toLowerCase().includes(query.toLowerCase())
+  );
 
   // Count items with Low/Critical status
-  const criticalCount = inventory.filter((i) => i.status === "Low" || i.status === "Critical").length;
+  const criticalCount = inventory.filter(
+    (i) => i.id !== "settings_telegram" && (i.status === "Low" || i.status === "Critical")
+  ).length;
 
   // Calculate total pantry value dynamically if needed, or estimate
   const inventoryValue = 202450; // Dynamic mock value

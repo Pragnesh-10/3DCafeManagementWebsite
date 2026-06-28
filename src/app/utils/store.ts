@@ -59,6 +59,23 @@ export interface Customer {
   spent: number;
   tier: "Gold" | "Silver" | "Bronze";
   lastVisit: string;
+  loyaltyPoints?: number;
+}
+
+export interface Feedback {
+  id: string;
+  orderId: string;
+  customerName: string;
+  rating: number;
+  comment: string;
+  timestamp: number;
+}
+
+export interface TableCall {
+  id: string;
+  tableNo: string;
+  timestamp: number;
+  resolved: boolean;
 }
 
 export interface Employee {
@@ -151,9 +168,15 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
 ];
 
 const INITIAL_CUSTOMERS: Customer[] = [
-  { name: "Emma Thompson", visits: 42, spent: 18450, tier: "Gold", lastVisit: "2 days ago" },
-  { name: "Michael Chen", visits: 38, spent: 15380, tier: "Gold", lastVisit: "Today" },
-  { name: "Sarah Jenkins", visits: 25, spent: 8210, tier: "Silver", lastVisit: "1 week ago" },
+  { name: "Emma Thompson", visits: 42, spent: 18450, tier: "Gold", lastVisit: "2 days ago", loyaltyPoints: 1840 },
+  { name: "Michael Chen", visits: 38, spent: 15380, tier: "Gold", lastVisit: "Today", loyaltyPoints: 1530 },
+  { name: "Sarah Jenkins", visits: 25, spent: 8210, tier: "Silver", lastVisit: "1 week ago", loyaltyPoints: 820 },
+];
+
+const INITIAL_FEEDBACK: Feedback[] = [
+  { id: "FB-001", orderId: "1038", customerName: "Sarah Jenkins", rating: 5, comment: "The Indiranagar Cold Brew is extremely smooth! Best in Bengaluru.", timestamp: Date.now() - 3600000 },
+  { id: "FB-002", orderId: "1039", customerName: "Michael Chen", rating: 4, comment: "Loved the Flat White. Blueberry Muffin was tasty but a tiny bit crumbly. Staff was super polite!", timestamp: Date.now() - 7200000 },
+  { id: "FB-003", orderId: "1040", customerName: "Emma Thompson", rating: 5, comment: "Incredibly fast service, and the custom cardamom profile is amazing. A masterpiece!", timestamp: Date.now() - 10800000 },
 ];
 
 const INITIAL_EMPLOYEES: Employee[] = [
@@ -185,6 +208,8 @@ export function getStoreData() {
     transactions: getOrInit<Transaction[]>("cafe_transactions", INITIAL_TRANSACTIONS),
     customers: getOrInit<Customer[]>("cafe_customers", INITIAL_CUSTOMERS),
     employees: getOrInit<Employee[]>("cafe_employees", INITIAL_EMPLOYEES),
+    feedbacks: getOrInit<Feedback[]>("cafe_feedbacks", INITIAL_FEEDBACK),
+    tableCalls: getOrInit<TableCall[]>("cafe_table_calls", []),
   };
 }
 
@@ -194,13 +219,39 @@ export function writeStoreData(data: ReturnType<typeof getStoreData>) {
   localStorage.setItem("cafe_transactions", JSON.stringify(data.transactions));
   localStorage.setItem("cafe_customers", JSON.stringify(data.customers));
   localStorage.setItem("cafe_employees", JSON.stringify(data.employees));
+  localStorage.setItem("cafe_feedbacks", JSON.stringify(data.feedbacks));
+  localStorage.setItem("cafe_table_calls", JSON.stringify(data.tableCalls));
   window.dispatchEvent(new Event(STORE_EVENT));
 }
 
 // Dispatch Telegram Notification helper
-export const sendTelegramNotification = async (order: Order, testMode = false) => {
-  const token = localStorage.getItem("cardamom_tg_token");
-  const chatId = localStorage.getItem("cardamom_tg_chat_id");
+export const sendTelegramNotification = async (
+  order: Order,
+  modeOrTest: "new" | "status_change" | "test" | boolean = "new",
+  oldStatus?: OrderStatus
+) => {
+  const isTest = modeOrTest === true || modeOrTest === "test";
+  const isStatusChange = modeOrTest === "status_change";
+
+  let token = localStorage.getItem("cardamom_tg_token");
+  let chatId = localStorage.getItem("cardamom_tg_chat_id");
+
+  // Fallback to reading settings synced in inventory if not set in local storage
+  if (!token || !chatId) {
+    try {
+      const localInv = localStorage.getItem("cafe_inventory");
+      if (localInv) {
+        const inventory: InventoryItem[] = JSON.parse(localInv);
+        const settingsRow = inventory.find((i) => i.id === "settings_telegram");
+        if (settingsRow) {
+          token = settingsRow.item || token;
+          chatId = settingsRow.unit || chatId;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to read telegram settings from inventory cache:", e);
+    }
+  }
 
   const emojiMap: Record<string, string> = {
     "Dine-in": "🍽️ Dine-in",
@@ -209,24 +260,40 @@ export const sendTelegramNotification = async (order: Order, testMode = false) =
   };
 
   const typeLabel = emojiMap[order.type] || order.type;
-  
-  const itemsText = order.items
-    .map((item) => `• ${item.qty}x *${item.name}* (₹${item.price})`)
-    .join("\n");
 
-  const messageText = testMode 
-    ? `☕️ *Cardamom Telegram Test Message*\nYour integration settings are configured successfully! 🎉`
-    : `☕️ *New Cardamom Order Received!*\n` +
-      `---------------------------------------\n` +
-      `*Order ID:* #${order.id}\n` +
-      `*Type:* ${typeLabel}\n\n` +
-      `👤 *Customer Name:* ${order.customer}\n` +
-      `📞 *Mobile:* ${order.customerPhone || "N/A"}\n` +
-      `📍 *Delivery/Table:* ${order.customerAddress || "N/A"}\n\n` +
-      `*Items Ordered:*\n${itemsText}\n\n` +
-      `*Total Amount:* ₹${order.total} (incl. GST)\n` +
-      `---------------------------------------\n` +
-      `⏳ *Status:* Received - Awaiting preparation`;
+  let messageText = "";
+
+  if (isTest) {
+    messageText = `☕ <b>Cardamom Telegram Test Message</b>\nYour integration settings are configured successfully! 🎉`;
+  } else if (isStatusChange) {
+    const statusEmoji = order.status === "Preparing" ? "👨‍🍳" : order.status === "Ready" ? "✅" : order.status === "Served" ? "🎉" : "⏳";
+    messageText = 
+      `🔔 <b>Cardamom Order Update!</b>\n` +
+      `───────────────────────\n` +
+      `<b>Order ID:</b> #${order.id}\n` +
+      `<b>Customer:</b> ${order.customer}\n` +
+      `<b>Type:</b> ${typeLabel}\n\n` +
+      `🔄 <b>Status:</b> <s>${oldStatus || "Received"}</s> ➔ <b>${order.status}</b>\n` +
+      `───────────────────────\n` +
+      `${statusEmoji} <i>Status is now ${order.status.toUpperCase()}</i>`;
+  } else {
+    const itemsText = order.items
+      .map((item) => `• ${item.qty}x <b>${item.name}</b> (₹${item.price})`)
+      .join("\n");
+
+    messageText = 
+      `☕ <b>New Cardamom Order Received!</b>\n` +
+      `───────────────────────\n` +
+      `<b>Order ID:</b> #${order.id}\n` +
+      `<b>Type:</b> ${typeLabel}\n\n` +
+      `👤 <b>Customer Name:</b> ${order.customer}\n` +
+      `📞 <b>Mobile:</b> ${order.customerPhone || "N/A"}\n` +
+      `📍 <b>Delivery/Table:</b> ${order.customerAddress || "N/A"}\n\n` +
+      `<b>Items Ordered:</b>\n${itemsText}\n\n` +
+      `<b>Total Amount:</b> ₹${order.total} (incl. GST)\n` +
+      `───────────────────────\n` +
+      `⏳ <b>Status:</b> Received - Awaiting preparation`;
+  }
 
   if (typeof window !== "undefined") {
     const event = new CustomEvent("telegram_notification_simulated", {
@@ -250,7 +317,7 @@ export const sendTelegramNotification = async (order: Order, testMode = false) =
       body: JSON.stringify({
         chat_id: chatId,
         text: messageText,
-        parse_mode: "Markdown",
+        parse_mode: "HTML",
       }),
     });
     return response.ok;
@@ -454,6 +521,7 @@ export function useCafeStore() {
       cust.spent += gstTotal;
       cust.tier = cust.spent > 15000 ? "Gold" : cust.spent > 5000 ? "Silver" : "Bronze";
       cust.lastVisit = "Today";
+      cust.loyaltyPoints = (cust.loyaltyPoints || 0) + Math.round(gstTotal * 0.1);
 
       if (supabase) {
         supabase.from("customers").upsert([{
@@ -474,6 +542,7 @@ export function useCafeStore() {
         spent: gstTotal,
         tier: gstTotal > 5000 ? "Silver" : "Bronze",
         lastVisit: "Today",
+        loyaltyPoints: Math.round(gstTotal * 0.1),
       };
       store.customers = [...store.customers, newCustomer];
 
@@ -505,6 +574,9 @@ export function useCafeStore() {
             if (error) console.error("Supabase advanceOrderStatus error:", error);
           });
         }
+
+        // Trigger Telegram status update notification
+        sendTelegramNotification(updated, "status_change", o.status);
 
         // If advanced to Served, automatically generate a transaction!
         if (nextStatus === "Served") {
@@ -694,6 +766,49 @@ export function useCafeStore() {
     });
   };
 
+  const addCustomerFeedback = (orderId: string, customerName: string, rating: number, comment: string) => {
+    const store = getStoreData();
+    const newFeedback: Feedback = {
+      id: `FB-${100 + store.feedbacks.length + Math.floor(Math.random() * 900)}`,
+      orderId,
+      customerName: customerName || "Guest Explorer",
+      rating,
+      comment,
+      timestamp: Date.now()
+    };
+    store.feedbacks = [newFeedback, ...store.feedbacks];
+
+    // Award feedback points (+50 loyalty points)
+    const cust = store.customers.find((c) => c.name.toLowerCase() === customerName.toLowerCase());
+    if (cust) {
+      cust.loyaltyPoints = (cust.loyaltyPoints || 0) + 50;
+    }
+
+    writeStoreData(store);
+  };
+
+  const callWaiter = (tableNo: string) => {
+    const store = getStoreData();
+    // Resolve any active call for this table first
+    store.tableCalls = store.tableCalls.filter(c => c.tableNo !== tableNo);
+    const newCall: TableCall = {
+      id: `TC-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      tableNo,
+      timestamp: Date.now(),
+      resolved: false
+    };
+    store.tableCalls = [newCall, ...store.tableCalls];
+    writeStoreData(store);
+  };
+
+  const resolveTableCall = (callId: string) => {
+    const store = getStoreData();
+    store.tableCalls = store.tableCalls.map(c => c.id === callId ? { ...c, resolved: true } : c);
+    // clean up resolved calls immediately from current list
+    store.tableCalls = store.tableCalls.filter(c => !c.resolved);
+    writeStoreData(store);
+  };
+
   return {
     ...data,
     placeOrder,
@@ -703,6 +818,9 @@ export function useCafeStore() {
     addManualInvoice,
     toggleEmployeeShift,
     isItemAvailable,
+    addCustomerFeedback,
+    callWaiter,
+    resolveTableCall,
   };
 }
 

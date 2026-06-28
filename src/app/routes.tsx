@@ -9,6 +9,7 @@ import { Customers } from "./pages/Customers";
 import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
 import { CustomerDashboard } from "./pages/CustomerDashboard";
+import { ChefBoard } from "./pages/ChefBoard";
 
 // Auth Guard for Admin - restricted to local hostname only and automatic login
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
@@ -53,6 +54,10 @@ export const router = createBrowserRouter([
   {
     path: "/order",
     Component: CustomerDashboard, // Publicly accessible for "Start your order"
+  },
+  {
+    path: "/chef",
+    Component: ChefBoard,
   },
   {
     path: "/admin",

@@ -22,9 +22,10 @@ const MENU_ITEMS = [
 
 export function CustomerDashboard() {
   const navigate = useNavigate();
-  const { placeOrder } = useCafeStore();
+  const { placeOrder, orders, customers, addCustomerFeedback, callWaiter } = useCafeStore();
   const [hasStarted, setHasStarted] = useState(true);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [lastPlacedOrderId, setLastPlacedOrderId] = useState<string | null>(null);
   const [orderType, setOrderType] = useState<"Dine-in" | "Takeaway" | "Online">("Dine-in");
   const [tableNo, setTableNo] = useState("");
   const [notes, setNotes] = useState("");
@@ -33,30 +34,18 @@ export function CustomerDashboard() {
   const [isBrewing, setIsBrewing] = useState(false);
   const [brewingStep, setBrewingStep] = useState(0);
 
-  // New checkout and Telegram details states
+  // New checkout states
   const [showCheckout, setShowCheckout] = useState(false);
   const [custName, setCustName] = useState("");
   const [custPhone, setCustPhone] = useState("");
   const [custAddress, setCustAddress] = useState("");
   const [pickupTime, setPickupTime] = useState("In 15 mins");
-  const [tgNotification, setTgNotification] = useState<string | null>(null);
 
-  // Listen to simulated Telegram event
-  React.useEffect(() => {
-    const handleTgEvent = (e: Event) => {
-      const customEvent = e as CustomEvent<{ message: string }>;
-      setTgNotification(customEvent.detail.message);
-      // Auto close after 10 seconds
-      const timer = setTimeout(() => {
-        setTgNotification(null);
-      }, 10000);
-      return () => clearTimeout(timer);
-    };
-    window.addEventListener("telegram_notification_simulated", handleTgEvent);
-    return () => {
-      window.removeEventListener("telegram_notification_simulated", handleTgEvent);
-    };
-  }, []);
+  // CRM/Feedback states
+  const [feedbackRating, setFeedbackRating] = useState(5);
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [waiterCalled, setWaiterCalled] = useState(false);
 
   const handleLogout = () => {
     triggerHaptic("medium");
@@ -126,7 +115,7 @@ export function CustomerDashboard() {
           : `Takeaway (Pickup: ${pickupTime})`;
 
         // Call store placeOrder dynamically with customer details
-        placeOrder(
+        const orderId = placeOrder(
           custName,
           cart,
           orderType,
@@ -134,6 +123,11 @@ export function CustomerDashboard() {
           resolvedAddress
         );
 
+        setLastPlacedOrderId(orderId);
+        setFeedbackSubmitted(false);
+        setFeedbackRating(5);
+        setFeedbackComment("");
+        setWaiterCalled(false);
         setIsBrewing(false);
         setOrderPlaced(true);
         triggerHaptic("success");
@@ -190,14 +184,116 @@ export function CustomerDashboard() {
           {/* ── SUCCESS SCREEN ── */}
           {orderPlaced && (
             <motion.div key="success" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-              className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
-                className="w-20 h-20 rounded-full bg-sage/15 flex items-center justify-center mb-6">
-                <CheckCircle2 size={40} className="text-sage" />
-              </motion.div>
-              <h1 className="text-4xl text-espresso mb-2">Order placed!</h1>
-              <p className="text-bark max-w-xs mb-1">Your tray is being prepared now.</p>
-              <p className="text-xs font-mono text-bark-soft mb-8">{orderRef} · {orderType}</p>
+              className="flex-1 flex flex-col items-center justify-start p-6 md:p-8 text-center overflow-y-auto max-h-full">
+              
+              <div className="w-16 h-16 rounded-full bg-sage/10 flex items-center justify-center mb-4">
+                <CheckCircle2 size={36} className="text-sage" />
+              </div>
+              <h1 className="text-3xl text-espresso mb-1">Order Confirmed!</h1>
+              <p className="text-bark text-sm mb-1">Your tray is being prepared now.</p>
+              <p className="text-xs font-mono text-bark-soft mb-6">{lastPlacedOrderId || "ORD-0000"} · {orderType}</p>
+
+              {/* ── REAL-TIME ORDER TRACKING STEPPER ── */}
+              <div className="w-full max-w-sm bg-paper border border-line rounded-[2rem] p-5 text-left mb-5 space-y-4">
+                <h3 className="text-xs uppercase tracking-wider text-bark-soft font-semibold mb-1">Live Order Status</h3>
+                
+                {/* Stepper Grid */}
+                <div className="grid grid-cols-4 gap-2 relative">
+                  {/* Stepper Bar */}
+                  <div className="absolute top-[18px] left-[12.5%] right-[12.5%] h-0.5 bg-line z-0">
+                    <div 
+                      className="h-full bg-clay transition-all duration-500" 
+                      style={{ 
+                        width: 
+                          (orders.find(o => o.id === lastPlacedOrderId)?.status === "Preparing" ? "33%" :
+                          orders.find(o => o.id === lastPlacedOrderId)?.status === "Ready" ? "66%" :
+                          orders.find(o => o.id === lastPlacedOrderId)?.status === "Served" ? "100%" : "0%")
+                      }}
+                    />
+                  </div>
+
+                  {[
+                    { status: "Received" as const, label: "Received", icon: Clock },
+                    { status: "Preparing" as const, label: "Brewing", icon: Coffee },
+                    { status: "Ready" as const, label: "Ready", icon: UtensilsCrossed },
+                    { status: "Served" as const, label: "Served", icon: CheckCircle2 }
+                  ].map((step) => {
+                    const activeIndex = ["Received", "Preparing", "Ready", "Served"].indexOf(orders.find(o => o.id === lastPlacedOrderId)?.status || "Received");
+                    const stepIndex = ["Received", "Preparing", "Ready", "Served"].indexOf(step.status);
+                    const isActive = stepIndex <= activeIndex;
+                    const Icon = step.icon;
+
+                    return (
+                      <div key={step.status} className="flex flex-col items-center z-10">
+                        <div 
+                          className={cn(
+                            "w-9 h-9 rounded-full flex items-center justify-center border text-xs transition-all duration-300",
+                            isActive 
+                              ? "bg-clay text-cream border-clay shadow-md" 
+                              : "bg-paper text-bark-soft border-line"
+                          )}
+                        >
+                          <Icon size={16} />
+                        </div>
+                        <span className={cn("text-[10px] mt-2 font-semibold tracking-tight", isActive ? "text-espresso" : "text-bark-soft")}>
+                          {step.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="bg-sand/30 border border-line/60 rounded-xl p-3 text-xs text-bark leading-relaxed mt-2 text-center font-mono">
+                  {orders.find(o => o.id === lastPlacedOrderId)?.status === "Received" && "☕ Kitchen has received your ticket. Preparing your premium brew."}
+                  {orders.find(o => o.id === lastPlacedOrderId)?.status === "Preparing" && "👨‍🍳 Baristas are grinding fresh beans and starting your extraction."}
+                  {orders.find(o => o.id === lastPlacedOrderId)?.status === "Ready" && "✨ Order is ready! Please collect your tray at the counter."}
+                  {orders.find(o => o.id === lastPlacedOrderId)?.status === "Served" && "❤️ Served. Thank you! We hope your coffee makes your day anti-gravitational."}
+                </div>
+              </div>
+
+              {/* ── SUMMON WAITER BUZZER (Dine-in Only) ── */}
+              {orderType === "Dine-in" && (
+                <div className="w-full max-w-sm mb-5">
+                  <button
+                    onClick={() => {
+                      triggerHaptic("medium");
+                      callWaiter(tableNo || "Counter");
+                      setWaiterCalled(true);
+                      toast.success("Staff alerted! A server will attend to your table shortly.");
+                    }}
+                    disabled={waiterCalled}
+                    className={cn(
+                      "w-full py-3 rounded-2xl text-xs uppercase tracking-wider font-semibold flex items-center justify-center gap-2 border transition-all duration-300 cursor-pointer",
+                      waiterCalled 
+                        ? "bg-sage/10 text-sage border-sage/30 cursor-default" 
+                        : "bg-paper hover:bg-sand text-espresso border-line shadow-sm hover:border-clay/50"
+                    )}
+                  >
+                    <span>🛎️</span>
+                    {waiterCalled ? "Server Summoned (On their way)" : `Call Waiter to Table ${tableNo}`}
+                  </button>
+                </div>
+              )}
+
+              {/* ── CRM LOYALTY BEANS CARD ── */}
+              <div className="w-full max-w-sm bg-sand/30 border border-line rounded-2xl p-4 text-left space-y-2 mb-5">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs uppercase tracking-wider text-bark-soft font-semibold">Bean Club Loyalty</span>
+                  <span className="px-2 py-0.5 bg-clay text-cream text-[9px] uppercase font-bold rounded-full">
+                    {customers.find(c => c.name.toLowerCase() === custName.toLowerCase())?.tier || "Bronze"} Member
+                  </span>
+                </div>
+                <div className="flex justify-between items-baseline">
+                  <span className="text-xs text-bark">Points earned this order:</span>
+                  <span className="font-mono text-sm font-semibold text-clay">+{Math.round(grandTotal * 0.1)} Beans</span>
+                </div>
+                <div className="pt-2 border-t border-line/50 flex justify-between items-center text-xs text-bark-soft">
+                  <span>Your current points balance:</span>
+                  <span className="font-mono font-bold text-espresso">{customers.find(c => c.name.toLowerCase() === custName.toLowerCase())?.loyaltyPoints || Math.round(grandTotal * 0.1)} Beans</span>
+                </div>
+              </div>
+
+              {/* ── ORDER SUMMARY DRAWER ── */}
               <div className="w-full max-w-sm bg-paper border border-line rounded-2xl p-5 text-left mb-6 space-y-2">
                 {cart.map((c) => (
                   <div key={c.item.id} className="flex justify-between text-sm">
@@ -211,11 +307,83 @@ export function CustomerDashboard() {
                 </div>
                 {notes && <p className="pt-2 border-t border-line text-xs text-bark-soft">Note: {notes}</p>}
               </div>
-              <div className="flex items-center gap-2 text-bark text-sm mb-8">
-                <Clock size={14} className="text-clay" /> Estimated wait: <strong className="text-espresso">8 – 12 min</strong>
+
+              {/* ── INTERACTIVE FEEDBACK SYSTEM ── */}
+              <div className="w-full max-w-sm bg-paper border border-line rounded-[2rem] p-5 text-left space-y-4 mb-6 shadow-sm">
+                <div className="text-center">
+                  <h3 className="text-base text-espresso font-semibold">Rate your experience</h3>
+                  <p className="text-xs text-bark-soft mt-1">Submit feedback to earn 50 bonus loyalty beans!</p>
+                </div>
+                
+                {feedbackSubmitted ? (
+                  <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="py-2 text-center space-y-2">
+                    <div className="w-10 h-10 rounded-full bg-sage/10 text-sage flex items-center justify-center mx-auto">
+                      <CheckCircle2 size={20} />
+                    </div>
+                    <h4 className="text-xs text-espresso font-semibold">Feedback Submitted!</h4>
+                    <p className="text-[11px] text-bark-soft">Thank you for helping us roast better. +50 Beans credited!</p>
+                  </motion.div>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Star Selector */}
+                    <div className="flex justify-center gap-1.5 py-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => {
+                            triggerHaptic("light");
+                            setFeedbackRating(star);
+                          }}
+                          className="p-1 transition-transform active:scale-125 cursor-pointer"
+                        >
+                          <Star
+                            size={24}
+                            className={cn(
+                              "transition-colors",
+                              star <= feedbackRating ? "fill-honey text-honey" : "text-line hover:text-honey/60"
+                            )}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                    
+                    {/* Comments input */}
+                    <textarea
+                      value={feedbackComment}
+                      onChange={(e) => setFeedbackComment(e.target.value)}
+                      placeholder="Leave a comment for our baristas..."
+                      rows={2}
+                      className="w-full bg-cream/30 border border-line rounded-xl p-3 text-xs text-espresso placeholder:text-bark-soft focus:outline-none focus:border-clay/60 resize-none font-sans"
+                    />
+                    
+                    <button
+                      onClick={() => {
+                        if (!feedbackComment.trim()) {
+                          toast.error("Please enter a short comment!");
+                          triggerHaptic("error");
+                          return;
+                        }
+                        triggerHaptic("success");
+                        addCustomerFeedback(
+                          lastPlacedOrderId || "ORD-0000",
+                          custName || "Guest",
+                          feedbackRating,
+                          feedbackComment
+                        );
+                        setFeedbackSubmitted(true);
+                        toast.success("Thank you! +50 Beans awarded!");
+                      }}
+                      className="w-full py-2 bg-espresso text-cream hover:bg-clay text-xs font-semibold tracking-wider uppercase transition-colors rounded-full cursor-pointer"
+                    >
+                      Submit &amp; Claim Beans
+                    </button>
+                  </div>
+                )}
               </div>
+
               <button onClick={() => { setCart([]); setNotes(""); setTableNo(""); setOrderPlaced(false); }}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-line bg-paper text-bark hover:text-espresso hover:bg-sand transition-colors text-sm">
+                className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-line bg-paper text-bark hover:text-espresso hover:bg-sand transition-colors text-sm cursor-pointer">
                 <ChevronLeft size={16} /> Order again
               </button>
             </motion.div>
@@ -657,36 +825,6 @@ export function CustomerDashboard() {
         )}
       </AnimatePresence>
 
-      {/* Telegram Notification (Simulator Popup) */}
-      <AnimatePresence>
-        {tgNotification && (
-          <motion.div
-            initial={{ opacity: 0, y: -50, scale: 0.9, x: 0 }}
-            animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="fixed top-4 right-4 z-[100] max-w-sm w-full bg-[#1e2734] border border-[#2b394a] rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.35)] overflow-hidden text-white font-sans text-left"
-          >
-            <div className="bg-[#151e27] px-4 py-3 flex items-center justify-between border-b border-[#2b394a]">
-              <div className="flex items-center gap-2">
-                <span className="w-7 h-7 rounded-full bg-[#2CA5E0] flex items-center justify-center text-white shrink-0">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15.82-1.87 7.9-2.73 8.35-.42.22-.84.28-1.2.22-.72-.11-1.28-.62-1.92-1.07-.46-.33-.92-.66-1.38-1-.46-.34-.92-.68-1.38-1.01l-1.38-.68c-.62-.31-.62-.92.15-1.23l12.31-4.9c.77-.31 1.38.15 1.23 1.32z" />
-                  </svg>
-                </span>
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#2CA5E0]">Telegram Notification (Simulator)</span>
-              </div>
-              <button onClick={() => setTgNotification(null)} className="text-gray-400 hover:text-white text-xs cursor-pointer bg-transparent border-0 p-1">✕</button>
-            </div>
-            <div className="p-4 whitespace-pre-wrap font-mono text-[11px] text-gray-200 overflow-y-auto max-h-[300px] leading-relaxed select-text bg-[#1e2734]">
-              {tgNotification}
-            </div>
-            <div className="bg-[#151e27] px-4 py-2 text-[10px] text-gray-400 text-center border-t border-[#2b394a]">
-              Sent to Roastery Telegram Bot ☕
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

@@ -4,7 +4,8 @@ import { Download, FileText, CreditCard, Banknote, Smartphone, Loader2, Send } f
 import { Button as NeonButton } from "../components/ui/neon-button";
 import { triggerHaptic } from "../utils/haptics";
 import { toast } from "sonner";
-import { sendTelegramNotification } from "../utils/store";
+import { sendTelegramNotification, useCafeStore } from "../utils/store";
+import { supabase } from "../utils/supabase";
 
 const TRANSACTIONS = [
   { id: "INV-2406-118", amount: 540, method: "UPI", status: "Paid", time: "10 min ago" },
@@ -26,17 +27,56 @@ export function Billing() {
   const gst = +(subtotal * 0.05).toFixed(2);
   const total = +(subtotal + gst).toFixed(2);
 
+  const { inventory } = useCafeStore();
+
   // Telegram Alert Settings States
   const [tgToken, setTgToken] = useState(localStorage.getItem("cardamom_tg_token") || "");
   const [tgChatId, setTgChatId] = useState(localStorage.getItem("cardamom_tg_chat_id") || "");
   const [isTesting, setIsTesting] = useState(false);
+
+  // Initialize Telegram settings from Supabase if not locally present
+  React.useEffect(() => {
+    if (!tgToken || !tgChatId) {
+      const settingsRow = inventory.find((i) => i.id === "settings_telegram");
+      if (settingsRow) {
+        if (!tgToken && settingsRow.item) setTgToken(settingsRow.item);
+        if (!tgChatId && settingsRow.unit) setTgChatId(settingsRow.unit);
+      }
+    }
+  }, [inventory, tgToken, tgChatId]);
 
   const handleSaveTelegram = (e: React.FormEvent) => {
     e.preventDefault();
     triggerHaptic("medium");
     localStorage.setItem("cardamom_tg_token", tgToken);
     localStorage.setItem("cardamom_tg_chat_id", tgChatId);
-    toast.success("Telegram settings saved successfully!");
+
+    if (supabase) {
+      supabase
+        .from("inventory")
+        .upsert([
+          {
+            id: "settings_telegram",
+            item: tgToken,
+            category: "settings",
+            stock: 0,
+            unit: tgChatId,
+            min_stock: 0,
+            status: "Good",
+            trend: "stable",
+          },
+        ])
+        .then(({ error }) => {
+          if (error) {
+            console.error("Failed to sync Telegram settings to Supabase:", error);
+            toast.error("Saved locally, but failed to sync to cloud database.");
+          } else {
+            toast.success("Telegram settings saved and synced to database!");
+          }
+        });
+    } else {
+      toast.success("Telegram settings saved successfully!");
+    }
   };
 
   const handleTestTelegram = async () => {
