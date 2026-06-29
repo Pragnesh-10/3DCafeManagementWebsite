@@ -17,7 +17,7 @@ type CafeProduct = {
 const sampleProducts: CafeProduct[] = [
   { id: 1, name: "Flat White", price: "₹210", score: 96, image: "https://images.unsplash.com/photo-1615485736894-a2d2e6d4cd9a?q=80&w=800&auto=format&fit=crop" },
   { id: 2, name: "Cappuccino", price: "₹190", score: 94, image: "https://images.unsplash.com/photo-1593443320739-77f74939d0da?q=80&w=800&auto=format&fit=crop" },
-  { id: 3, name: "Pour Over", price: "₹240", score: 92, image: "https://images.unsplash.com/photo-1522012188892-24beb302783d?q=80&w=800&auto=format&fit=crop" },
+  { id: 3, name: "Pour Over", price: "₹240", score: 92, image: "https://images.unsplash.com/photo-1522012188892-24beb30278?q=80&w=800&auto=format&fit=crop" },
   { id: 4, name: "Cinnamon Roll", price: "₹180", score: 95, image: "https://images.unsplash.com/photo-1645995575875-ea6511c9d127?q=80&w=800&auto=format&fit=crop" },
   { id: 5, name: "Iced Latte", price: "₹230", score: 90, image: "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?q=80&w=800&auto=format&fit=crop" },
   { id: 6, name: "Single-Origin Espresso", price: "₹160", score: 93, image: "https://images.unsplash.com/photo-1610889556528-9a770e32642f?q=80&w=800&auto=format&fit=crop" },

@@ -14,7 +14,7 @@ type Mode = "people" | "order";
 
 const MENU_ITEMS = [
   { id: 1, name: "Caramel Macchiato", category: "Hot drinks", price: 360, image: "https://images.unsplash.com/photo-1593443320739-77f74939d0da?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
-  { id: 2, name: "Dark Espresso", category: "Hot drinks", price: 180, image: "https://images.unsplash.com/photo-1579992357154-faf4bde95b3d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
+  { id: 2, name: "Dark Espresso", category: "Hot drinks", price: 180, image: "https://images.unsplash.com/photo-1579992357154-faf4bde95b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
   { id: 3, name: "Iced Cold Brew", category: "Cold drinks", price: 320, image: "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
   { id: 4, name: "Butter Croissant", category: "Pastries", price: 220, image: "https://images.unsplash.com/photo-1623334044303-241021148842?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },
   { id: 5, name: "Blueberry Muffin", category: "Pastries", price: 240, image: "https://images.unsplash.com/photo-1607958996333-41aef7caefaa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=800&q=80" },

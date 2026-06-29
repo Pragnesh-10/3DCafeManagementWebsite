@@ -1,4 +1,4 @@
--- 3D Cafe Management Database Schema
+--  Cafe Management Database Schema
 -- Run this SQL in your Supabase SQL Editor to set up the database tables and seed data.
 
 -- 1. CLEANUP (Optional: Uncomment to reset tables)

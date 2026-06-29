@@ -17,7 +17,7 @@ export function PrivacyPolicy() {
           <section>
             <h2 className="text-xl font-semibold text-black mb-2">1. Introduction</h2>
             <p>
-              Welcome to the 3D Cafe Management Website. This Privacy Policy outlines how we collect, use, and protect your personal data in compliance with the Digital Personal Data Protection Act, 2023 (DPDP Act).
+              Welcome to the  Cafe Management Website. This Privacy Policy outlines how we collect, use, and protect your personal data in compliance with the Digital Personal Data Protection Act, 2023 (DPDP Act).
             </p>
           </section>
 
@@ -52,7 +52,7 @@ export function PrivacyPolicy() {
           <section>
             <h2 className="text-xl font-semibold text-black mb-2">5. Data Fiduciary Contact</h2>
             <p>
-              For any privacy-related concerns or to reach our Data Protection Officer, please contact us at privacy@3dcafe.com.
+              For any privacy-related concerns or to reach our Data Protection Officer, please contact us at privacy@cafe.com.
             </p>
           </section>
         </div>

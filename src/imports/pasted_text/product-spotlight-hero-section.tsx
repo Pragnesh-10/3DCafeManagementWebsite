@@ -30,35 +30,35 @@ const sampleProducts = [
     name: "Rayban Sunglasses", 
     price: "$89.99", 
     score: 91, 
-    image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
   { 
     id: 2, 
     name: "Airpods Pro", 
     price: "$119.00", 
     score: 89, 
-    image: "https://images.unsplash.com/photo-1656068566049-67e3c04fd4ce?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1656068566049-67e3c04fd4ce?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
   { 
     id: 3, 
     name: "Acrylic Handmade Bracelet", 
     price: "$74.99", 
     score: 94, 
-    image: "https://images.unsplash.com/photo-1689397136362-dce64e557fcc?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1689397136362-dce64e557fcc?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
   { 
     id: 4, 
     name: "JBL Bluetooth Speaker", 
     price: "$49.50", 
     score: 88, 
-    image: "https://images.unsplash.com/photo-1588131153911-a4ea5189fe19?q=80&w=1762&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1588131153911-a4ea5189fe19?q=80&w=1762&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
   { 
     id: 5, 
     name: "Andoor Essential Backpack", 
     price: "$129.90", 
     score: 93, 
-    image: "https://images.unsplash.com/photo-1546938576-6e6a64f317cc?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1546938576-6e6a64f317cc?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
 
   // BACKROUND PRODUCTS (6-20)
@@ -67,105 +67,105 @@ const sampleProducts = [
     name: "Automatic Soap Dispenser", 
     price: "$2.80", 
     score: 87, 
-    image: "https://images.unsplash.com/photo-1605034313761-73ea4a0cfbf3?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1605034313761-73ea4a0cfbf3?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
   { 
     id: 7, 
     name: "Foot Massage Roller", 
     price: "$1.25", 
     score: 85, 
-    image: "https://images.unsplash.com/photo-1672330427989-7676be4a34bc?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1672330427989-7676be4a34bc?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
   { 
     id: 8, 
     name: "Collapsible Water Bottle", 
     price: "$1.60", 
     score: 90, 
-    image: "https://images.unsplash.com/photo-1588959570984-9f1e0e9a91a6?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1588959570984-9f1e0e9a91a6?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
   { 
     id: 9, 
     name: "Multi-Angle Phone Stand", 
     price: "$0.95", 
     score: 83, 
-    image: "https://images.unsplash.com/photo-1738721796968-bc0c4a55960d?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1738721796968-bc0c4a55960d?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
   { 
     id: 10, 
     name: "Wireless Charging Pad", 
     price: "$2.10", 
     score: 86, 
-    image: "https://images.unsplash.com/photo-1562157705-52df57a5883b?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1562157705-52df57a5883b?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
   { 
     id: 11, 
     name: "Kids LED Night Light", 
     price: "$1.80", 
     score: 82, 
-    image: "https://images.unsplash.com/photo-1598032895397-b9472444bf93?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1598032895397-b9472444bf93?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
   { 
     id: 12, 
     name: "Portable Blender Bottle", 
     price: "$3.50", 
     score: 92, 
-    image: "https://images.unsplash.com/photo-1691256676359-20e5c6d4bc92?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1691256676359-20e5c6d4bc92?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
   { 
     id: 13, 
     name: "Car Scratch Remover Pen", 
     price: "$0.70", 
     score: 79, 
-    image: "https://images.unsplash.com/photo-1729146768776-8356708e907d?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1729146768776-8356708e907d?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
   { 
     id: 14, 
     name: "Stretch Lid Set (6pcs)", 
     price: "$1.20", 
     score: 84, 
-    image: "https://images.unsplash.com/photo-1598443053960-0e8608b282fd?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1598443053960-0e8608b282fd?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
   { 
     id: 15, 
     name: "Pet Water Dispenser", 
     price: "$2.40", 
     score: 88, 
-    image: "https://images.unsplash.com/photo-1570841398833-43e352b440ca?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1570841398833-43e352b440ca?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
   { 
     id: 16, 
     name: "Magnetic Lashes Kit", 
     price: "$1.90", 
     score: 77, 
-    image: "https://images.unsplash.com/photo-1664216294573-b28282de564b?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1664216294573-b28282de564b?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
   { 
     id: 17, 
     name: "Silicone Sink Organizer", 
     price: "$1.10", 
     score: 81, 
-    image: "https://images.unsplash.com/photo-1489423561257-34e31d8836b2?q=80&w=1801&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1489423561257-34e31d8836b2?q=80&w=1801&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
   { 
     id: 18, 
     name: "Electric Lint Remover", 
     price: "$2.30", 
     score: 80, 
-    image: "https://images.unsplash.com/photo-1561808843-7adeb9606939?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1561808843-7adeb9606939?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
   { 
     id: 19, 
     name: "Foldable Laptop Stand", 
     price: "$2.80", 
     score: 89, 
-    image: "https://images.unsplash.com/photo-1622818425825-1dcdb3a39c30?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1622818425825-1dcdb3a39c30?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
   { 
     id: 20, 
     name: "Reusable Food Storage Bags", 
     price: "$0.85", 
     score: 84, 
-    image: "https://images.unsplash.com/photo-1580130281320-0ef0754f2bf7?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+    image: "https://images.unsplash.com/photo-1580130281320-0ef0754f2bf7?q=80&w=1760&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%%"
   },
 ]
 
@@ -589,7 +589,7 @@ export function Component() {
                   linear-gradient(135deg, hsl(var(--background)), hsl(var(--muted) / 0.2))
                 `,
                 willChange: 'transform',
-                transform: 'translate3d(0, 0, 0)'
+                transform: 'translate(0, 0, 0)'
               }}
             >
               {/* Stable background products - always visible */}
