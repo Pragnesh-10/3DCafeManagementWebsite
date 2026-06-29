@@ -1,6 +1,7 @@
 import { RouterProvider } from 'react-router';
 import { router } from './routes';
 import { Toaster } from './components/ui/sonner';
+import { ConsentBanner } from './components/ConsentBanner';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
           },
         }}
       />
+      <ConsentBanner />
     </>
   );
 }

@@ -10,6 +10,8 @@ import { Landing } from "./pages/Landing";
 import { Login } from "./pages/Login";
 import { CustomerDashboard } from "./pages/CustomerDashboard";
 import { ChefBoard } from "./pages/ChefBoard";
+import { PrivacyPolicy } from "./pages/PrivacyPolicy";
+import { UserDataManagement } from "./pages/UserDataManagement";
 
 // Auth Guard for Admin - restricted to local hostname only and automatic login
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
@@ -58,6 +60,14 @@ export const router = createBrowserRouter([
   {
     path: "/chef",
     Component: ChefBoard,
+  },
+  {
+    path: "/privacy-policy",
+    Component: PrivacyPolicy,
+  },
+  {
+    path: "/data-management",
+    Component: UserDataManagement,
   },
   {
     path: "/admin",
