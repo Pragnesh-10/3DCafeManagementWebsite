@@ -4,7 +4,6 @@ import { Card } from "../components/Card";
 import { motion, AnimatePresence } from "motion/react";
 import { ChefHat, Bell, Clock, RefreshCw, BookOpen, AlertTriangle, Check, ArrowRight, CheckCircle2, UserSquare, CupSoda, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { triggerHaptic } from "../utils/haptics";
 
 // Recipe handbook data for Chef drawer
 const RECIPE_BOOK: Record<string, string[]> = {
@@ -118,7 +117,7 @@ export function ChefBoard() {
   };
 
   const handleCancel = (orderId: string) => {
-    triggerHaptic("error");
+    navigator.vibrate?.([60, 120, 60]);
     if (window.confirm(`Are you sure you want to cancel order #${orderId}?`)) {
       cancelOrder(orderId);
       toast.error(`Order #${orderId} was cancelled.`);
@@ -158,7 +157,7 @@ export function ChefBoard() {
         {/* Tab Toggler */}
         <div className="flex bg-sand/50 border border-line rounded-full p-1.5 self-stretch sm:self-auto">
           <button
-            onClick={() => { triggerHaptic("light"); setActiveTab("chef"); }}
+            onClick={() => { navigator.vibrate?.(12); setActiveTab("chef"); }}
             className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2 rounded-full text-sm font-semibold transition-all ${
               activeTab === "chef" 
                 ? "bg-espresso text-cream shadow-md" 
@@ -168,7 +167,7 @@ export function ChefBoard() {
             <ChefHat size={16} /> Kitchen Board (Chef KDS)
           </button>
           <button
-            onClick={() => { triggerHaptic("light"); setActiveTab("waiter"); }}
+            onClick={() => { navigator.vibrate?.(12); setActiveTab("waiter"); }}
             className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2 rounded-full text-sm font-semibold transition-all ${
               activeTab === "waiter" 
                 ? "bg-espresso text-cream shadow-md" 
@@ -203,7 +202,7 @@ export function ChefBoard() {
                       <div 
                         key={name} 
                         onClick={() => {
-                          triggerHaptic("light");
+                          navigator.vibrate?.(12);
                           setSelectedRecipe({ name, steps: RECIPE_BOOK[name] || ["Recipe instructions not configured."] });
                         }}
                         className="flex justify-between items-center bg-sand/30 hover:bg-sand/60 border border-line/60 rounded-xl p-3 cursor-pointer hover:border-clay/30 transition-all group"
@@ -302,7 +301,7 @@ export function ChefBoard() {
                                 <div 
                                   key={idx} 
                                   onClick={() => {
-                                    triggerHaptic("light");
+                                    navigator.vibrate?.(12);
                                     setSelectedRecipe({ name: item.name, steps: RECIPE_BOOK[item.name] || ["Recipe instructions not configured."] });
                                   }}
                                   className="flex gap-2 text-sm text-bark cursor-pointer hover:text-clay transition-colors"
@@ -385,7 +384,7 @@ export function ChefBoard() {
                         </div>
                         <button
                           onClick={() => {
-                            triggerHaptic("success");
+                            navigator.vibrate?.([15, 60, 15]);
                             resolveTableCall(call.id);
                             toast.success(`Cleared alert for Table ${call.tableNo}`);
                           }}
@@ -471,7 +470,7 @@ export function ChefBoard() {
                         <button
                           onClick={() => {
                             if (table.activeCall) {
-                              triggerHaptic("success");
+                              navigator.vibrate?.([15, 60, 15]);
                               resolveTableCall(table.activeCall.id);
                               toast.success(`Cleared table ${table.tableNo} service request.`);
                             }

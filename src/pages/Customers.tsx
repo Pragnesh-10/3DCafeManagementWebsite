@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../utils/cn";
 import { Button as NeonButton } from "../components/ui/neon-button";
 import { CafeSpotlightHero } from "../components/CafeSpotlightHero";
-import { triggerHaptic } from "../utils/haptics";
 import { toast } from "sonner";
 import { useCafeStore } from "../utils/store";
 
@@ -31,7 +30,7 @@ export function Customers() {
   const { customers, placeOrder } = useCafeStore();
 
   const addToCart = (item: typeof MENU_ITEMS[0]) => {
-    triggerHaptic("light");
+    navigator.vibrate?.(12);
     setCart((prev) => {
       const existing = prev.find((i) => i.item.id === item.id);
       if (existing) return prev.map((i) => (i.item.id === item.id ? { ...i, qty: i.qty + 1 } : i));
@@ -41,7 +40,7 @@ export function Customers() {
   };
 
   const updateQty = (id: number, delta: number) => {
-    triggerHaptic("light");
+    navigator.vibrate?.(12);
     setCart((prev) =>
       prev.map((i) => (i.item.id === id ? { ...i, qty: Math.max(0, i.qty + delta) } : i)).filter((i) => i.qty > 0)
     );
@@ -49,14 +48,14 @@ export function Customers() {
 
   const handleTakePayment = () => {
     setIsProcessing(true);
-    triggerHaptic("medium");
+    navigator.vibrate?.(22);
     
     // Call store placeOrder
     placeOrder("Walk-in Customer", cart, "Takeaway");
 
     setTimeout(() => {
       setIsProcessing(false);
-      triggerHaptic("success");
+      navigator.vibrate?.([15, 60, 15]);
       toast.success(`Payment of ₹${(cartTotal + tax).toFixed(2)} received!`, {
         description: "POS transaction finalized and printed successfully."
       });
@@ -82,7 +81,7 @@ export function Customers() {
             <button
               key={m}
               onClick={() => {
-                triggerHaptic("medium");
+                navigator.vibrate?.(22);
                 setMode(m);
               }}
               className={cn(
@@ -169,7 +168,7 @@ export function Customers() {
             exit={{ opacity: 0, y: -10 }}
             className="flex-1 min-h-0 overflow-y-auto custom-scrollbar"
           >
-            <CafeSpotlightHero onStart={() => { triggerHaptic("medium"); setHasStarted(true); }} />
+            <CafeSpotlightHero onStart={() => { navigator.vibrate?.(22); setHasStarted(true); }} />
           </motion.div>
         ) : (
           <motion.div
@@ -186,7 +185,7 @@ export function Customers() {
                   <button
                     key={cat}
                     onClick={() => {
-                      triggerHaptic("light");
+                      navigator.vibrate?.(12);
                       setActiveCategory(cat);
                     }}
                     className={cn(

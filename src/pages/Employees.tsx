@@ -2,7 +2,6 @@ import React from "react";
 import { Card } from "../components/Card";
 import { Users, Calendar, Clock, Target } from "lucide-react";
 import { useCafeStore } from "../utils/store";
-import { triggerHaptic } from "../utils/haptics";
 import { toast } from "sonner";
 
 export function Employees() {
@@ -24,7 +23,7 @@ export function Employees() {
   ];
 
   const handleToggleShift = (name: string) => {
-    triggerHaptic("medium");
+    navigator.vibrate?.(22);
     toggleEmployeeShift(name);
     const updatedEmployee = employees.find(e => e.name === name);
     const nextStatus = updatedEmployee?.status === "On shift" ? "Off shift" : "On shift";

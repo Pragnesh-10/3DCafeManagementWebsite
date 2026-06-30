@@ -34,7 +34,6 @@ const buttonVariants = cva(
   },
 );
 
-import { triggerHaptic } from "../../utils/haptics";
 
 function Button({
   className,
@@ -50,7 +49,7 @@ function Button({
   const Comp = asChild ? Slot : "button";
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    triggerHaptic("light");
+    navigator.vibrate?.(12);
     if (onClick) {
       onClick(e);
     }

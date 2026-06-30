@@ -34,12 +34,11 @@ export interface ButtonProps
   neon?: boolean;
 }
 
-import { triggerHaptic } from '../../utils/haptics';
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, neon = true, size, variant, children, onClick, ...props }, ref) => {
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-      triggerHaptic("light");
+      navigator.vibrate?.(12);
       if (onClick) {
         onClick(e);
       }

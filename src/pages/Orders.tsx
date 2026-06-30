@@ -3,7 +3,6 @@ import { Card } from "../components/Card";
 import { motion, AnimatePresence } from "motion/react";
 import { Clock, CheckCircle2, ChefHat, ShoppingBag, UtensilsCrossed, Globe, ChevronRight } from "lucide-react";
 import { cn } from "../utils/cn";
-import { triggerHaptic } from "../utils/haptics";
 import { toast } from "sonner";
 import { useCafeStore, type OrderStatus, type OrderType } from "../utils/store";
 
@@ -19,9 +18,9 @@ export function Orders() {
 
   const moveOrder = (id: string, newStatus: OrderStatus) => {
     if (newStatus === "Served") {
-      triggerHaptic("success");
+      navigator.vibrate?.([15, 60, 15]);
     } else {
-      triggerHaptic("medium");
+      navigator.vibrate?.(22);
     }
     
     advanceOrderStatus(id, newStatus);

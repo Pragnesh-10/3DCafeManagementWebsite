@@ -7,7 +7,6 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "../utils/supabase";
-import { triggerHaptic } from "../utils/haptics";
 
 export function Login() {
   const navigate = useNavigate();
@@ -21,7 +20,7 @@ export function Login() {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    triggerHaptic("medium");
+    navigator.vibrate?.(22);
 
     if (isSignUp) {
       // 1. Sign Up Flow
@@ -38,16 +37,16 @@ export function Login() {
         });
 
         if (error) {
-          triggerHaptic("error");
+          navigator.vibrate?.([60, 120, 60]);
           toast.error(error.message);
         } else if (data?.user) {
-          triggerHaptic("success");
+          navigator.vibrate?.([15, 60, 15]);
           toast.success("Successfully registered! Please log in.");
           setIsSignUp(false);
           setPassword("");
         }
       } else {
-        triggerHaptic("success");
+        navigator.vibrate?.([15, 60, 15]);
         toast.info("Offline mode: Account registration simulated.");
         setIsSignUp(false);
         setPassword("");
@@ -61,7 +60,7 @@ export function Login() {
         });
 
         if (error) {
-          triggerHaptic("error");
+          navigator.vibrate?.([60, 120, 60]);
           toast.error(error.message);
         } else if (data?.user) {
           const userRole = data.user.user_metadata?.role || (email.includes("admin") ? "admin" : "customer");
@@ -69,7 +68,7 @@ export function Login() {
           
           sessionStorage.setItem("user_role", userRole === "admin" ? "staff_manager" : userRole);
           sessionStorage.setItem("user_name", userName);
-          triggerHaptic("success");
+          navigator.vibrate?.([15, 60, 15]);
           toast.success(`Welcome back, ${userName}!`);
           
           if (userRole === "admin" || userRole === "staff_manager") {
@@ -85,7 +84,7 @@ export function Login() {
         
         sessionStorage.setItem("user_role", role === "admin" ? "staff_manager" : role);
         sessionStorage.setItem("user_name", role === "admin" ? formattedName || "Store Manager" : formattedName || "Guest Explorer");
-        triggerHaptic("success");
+        navigator.vibrate?.([15, 60, 15]);
         toast.info("Running in offline / mock mode.");
         toast.success(`Logged in as ${role === "admin" ? "Staff Manager" : "Customer"}!`);
         
@@ -100,7 +99,7 @@ export function Login() {
   };
 
   const handleRoleSelection = (selectedRole: "admin" | "customer") => {
-    triggerHaptic("medium");
+    navigator.vibrate?.(22);
     setRole(selectedRole);
   };
 
@@ -108,7 +107,7 @@ export function Login() {
     <div className="min-h-screen bg-cream flex flex-col items-center justify-center p-6 selection:bg-clay/20">
       <Link 
         to="/" 
-        onClick={() => triggerHaptic("light")}
+        onClick={() => navigator.vibrate?.(12)}
         className="absolute top-8 left-8 flex items-center gap-2 text-bark-soft hover:text-espresso transition-colors"
       >
         <ArrowLeft size={18} />
@@ -174,7 +173,7 @@ export function Login() {
 
               <button
                 onClick={() => {
-                  triggerHaptic("medium");
+                  navigator.vibrate?.(22);
                   navigate("/chef");
                 }}
                 className="group flex items-center gap-5 p-5 bg-sand/30 border border-line rounded-2xl hover:border-clay/50 hover:bg-sand/50 transition-all text-left cursor-pointer"
@@ -202,7 +201,7 @@ export function Login() {
                 <button
                   type="button"
                   onClick={() => {
-                    triggerHaptic("light");
+                    navigator.vibrate?.(12);
                     setRole(null);
                     setIsSignUp(false);
                   }}
@@ -220,7 +219,7 @@ export function Login() {
                     <button
                       type="button"
                       onClick={() => {
-                        triggerHaptic("light");
+                        navigator.vibrate?.(12);
                         setIsSignUp(!isSignUp);
                       }}
                       className="text-xs text-clay hover:text-espresso font-semibold cursor-pointer"
@@ -271,7 +270,7 @@ export function Login() {
                   {!isSignUp && (
                     <button 
                       type="button" 
-                      onClick={() => triggerHaptic("light")}
+                      onClick={() => navigator.vibrate?.(12)}
                       className="text-xs text-bark-soft hover:text-clay cursor-pointer bg-transparent border-0 p-0"
                     >
                       Forgot?
@@ -309,7 +308,7 @@ export function Login() {
                       Already have an account?{" "}
                       <button
                         type="button"
-                        onClick={() => { triggerHaptic("light"); setIsSignUp(false); }}
+                        onClick={() => { navigator.vibrate?.(12); setIsSignUp(false); }}
                         className="text-clay hover:underline font-semibold cursor-pointer bg-transparent border-0 p-0"
                       >
                         Sign In
@@ -321,7 +320,7 @@ export function Login() {
                         Don't have an account?{" "}
                         <button
                           type="button"
-                          onClick={() => { triggerHaptic("light"); setIsSignUp(true); }}
+                          onClick={() => { navigator.vibrate?.(12); setIsSignUp(true); }}
                           className="text-clay hover:underline font-semibold cursor-pointer bg-transparent border-0 p-0"
                         >
                           Join the Bean Club

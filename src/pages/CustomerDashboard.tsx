@@ -8,7 +8,6 @@ import { Card } from "../components/Card";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { triggerHaptic } from "../utils/haptics";
 import { useCafeStore } from "../utils/store";
 
 const MENU_ITEMS = [
@@ -48,7 +47,7 @@ export function CustomerDashboard() {
   const [waiterCalled, setWaiterCalled] = useState(false);
 
   const handleLogout = () => {
-    triggerHaptic("medium");
+    navigator.vibrate?.(22);
     if (!sessionStorage.getItem("user_role")) {
       navigate("/");
       return;
@@ -60,7 +59,7 @@ export function CustomerDashboard() {
   };
 
   const addToCart = (item: typeof MENU_ITEMS[0]) => {
-    triggerHaptic("light");
+    navigator.vibrate?.(12);
     setCart((prev) => {
       const existing = prev.find((i) => i.item.id === item.id);
       if (existing) return prev.map((i) => (i.item.id === item.id ? { ...i, qty: i.qty + 1 } : i));
@@ -70,7 +69,7 @@ export function CustomerDashboard() {
   };
 
   const updateQty = (id: number, delta: number) => {
-    triggerHaptic("light");
+    navigator.vibrate?.(12);
     setCart((prev) =>
       prev.map((i) => (i.item.id === id ? { ...i, qty: Math.max(0, i.qty + delta) } : i)).filter((i) => i.qty > 0)
     );
@@ -79,23 +78,23 @@ export function CustomerDashboard() {
   const handleConfirmCheckout = (e: React.FormEvent) => {
     e.preventDefault();
     if (!custName.trim() || !custPhone.trim()) {
-      triggerHaptic("error");
+      navigator.vibrate?.([60, 120, 60]);
       toast.error("Please enter Name and Mobile Number");
       return;
     }
     if (orderType === "Dine-in" && !tableNo.trim()) {
-      triggerHaptic("error");
+      navigator.vibrate?.([60, 120, 60]);
       toast.error("Please enter your Table Number");
       return;
     }
     if (orderType === "Online" && !custAddress.trim()) {
-      triggerHaptic("error");
+      navigator.vibrate?.([60, 120, 60]);
       toast.error("Please enter your Delivery Address");
       return;
     }
 
     setShowCheckout(false);
-    triggerHaptic("medium");
+    navigator.vibrate?.(22);
     setIsBrewing(true);
     setBrewingStep(0);
 
@@ -104,7 +103,7 @@ export function CustomerDashboard() {
       currentStep++;
       if (currentStep < 4) {
         setBrewingStep(currentStep);
-        triggerHaptic("light");
+        navigator.vibrate?.(12);
       } else {
         clearInterval(interval);
 
@@ -130,7 +129,7 @@ export function CustomerDashboard() {
         setWaiterCalled(false);
         setIsBrewing(false);
         setOrderPlaced(true);
-        triggerHaptic("success");
+        navigator.vibrate?.([15, 60, 15]);
       }
     }, 700);
   };
@@ -256,7 +255,7 @@ export function CustomerDashboard() {
                 <div className="w-full max-w-sm mb-5">
                   <button
                     onClick={() => {
-                      triggerHaptic("medium");
+                      navigator.vibrate?.(22);
                       callWaiter(tableNo || "Counter");
                       setWaiterCalled(true);
                       toast.success("Staff alerted! A server will attend to your table shortly.");
@@ -332,7 +331,7 @@ export function CustomerDashboard() {
                           key={star}
                           type="button"
                           onClick={() => {
-                            triggerHaptic("light");
+                            navigator.vibrate?.(12);
                             setFeedbackRating(star);
                           }}
                           className="p-1 transition-transform active:scale-125 cursor-pointer"
@@ -361,10 +360,10 @@ export function CustomerDashboard() {
                       onClick={() => {
                         if (!feedbackComment.trim()) {
                           toast.error("Please enter a short comment!");
-                          triggerHaptic("error");
+                          navigator.vibrate?.([60, 120, 60]);
                           return;
                         }
-                        triggerHaptic("success");
+                        navigator.vibrate?.([15, 60, 15]);
                         addCustomerFeedback(
                           lastPlacedOrderId || "ORD-0000",
                           custName || "Guest",
@@ -442,7 +441,7 @@ export function CustomerDashboard() {
                       <button
                         key={cat}
                         onClick={() => {
-                          triggerHaptic("light");
+                          navigator.vibrate?.(12);
                           setActiveCategory(cat);
                         }}
                         className={cn(
@@ -583,7 +582,7 @@ export function CustomerDashboard() {
                       disabled={cart.length === 0 || isBrewing}
                       className="w-full h-12 rounded-xl text-base"
                       onClick={() => {
-                        triggerHaptic("medium");
+                        navigator.vibrate?.(22);
                         setShowCheckout(true);
                       }}
                     >
@@ -710,7 +709,7 @@ export function CustomerDashboard() {
                 <button
                   type="button"
                   onClick={() => {
-                    triggerHaptic("light");
+                    navigator.vibrate?.(12);
                     setShowCheckout(false);
                   }}
                   className="w-8 h-8 rounded-full bg-sand flex items-center justify-center text-bark hover:text-espresso transition-colors cursor-pointer border-0"
@@ -804,7 +803,7 @@ export function CustomerDashboard() {
                     type="button"
                     variant="outline"
                     onClick={() => {
-                      triggerHaptic("light");
+                      navigator.vibrate?.(12);
                       setShowCheckout(false);
                     }}
                     className="flex-1 rounded-xl h-11 border-0"

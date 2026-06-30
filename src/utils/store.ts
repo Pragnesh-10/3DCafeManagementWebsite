@@ -1,3 +1,4 @@
+import { create } from 'zustand';
 import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
 
@@ -186,7 +187,6 @@ const INITIAL_EMPLOYEES: Employee[] = [
   { name: "Sam Wilson", role: "Barista", shift: "14:00 – 22:00", status: "Upcoming", score: 95 },
 ];
 
-const STORE_EVENT = "cafe_store_update";
 
 export function getStoreData() {
   const getOrInit = <T>(key: string, initial: T): T => {
@@ -221,7 +221,7 @@ export function writeStoreData(data: ReturnType<typeof getStoreData>) {
   localStorage.setItem("cafe_employees", JSON.stringify(data.employees));
   localStorage.setItem("cafe_feedbacks", JSON.stringify(data.feedbacks));
   localStorage.setItem("cafe_table_calls", JSON.stringify(data.tableCalls));
-  window.dispatchEvent(new Event(STORE_EVENT));
+  useCafeStoreData.setState(data);
 }
 
 // Dispatch Telegram Notification helper
@@ -328,19 +328,17 @@ export const sendTelegramNotification = async (
 };
 
 // Custom hook for unified café state with Supabase sync
+const useCafeStoreData = create<ReturnType<typeof getStoreData>>(() => getStoreData());
+
 export function useCafeStore() {
-  const [data, setData] = useState(getStoreData());
+  const data = useCafeStoreData();
 
   useEffect(() => {
     const handler = () => {
-      setData(getStoreData());
+      useCafeStoreData.setState(getStoreData());
     };
-    window.addEventListener(STORE_EVENT, handler);
-    window.addEventListener("storage", handler); // Sync between tabs
-    return () => {
-      window.removeEventListener(STORE_EVENT, handler);
-      window.removeEventListener("storage", handler);
-    };
+    window.addEventListener("storage", handler);
+    return () => window.removeEventListener("storage", handler);
   }, []);
 
   // Sync state from Supabase once on mount and subscribe to realtime updates

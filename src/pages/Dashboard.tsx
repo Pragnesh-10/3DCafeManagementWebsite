@@ -7,7 +7,6 @@ import { TrendingUp, Users, IndianRupee, Coffee, ArrowUpRight, Star, AlertTriang
 import { useCafeStore } from "../utils/store";
 import { Navigate } from "react-router";
 import { toast } from "sonner";
-import { triggerHaptic } from "../utils/haptics";
 
 const salesData = [
   { time: "8a", actual: 1200, forecast: 1300 },
@@ -288,7 +287,7 @@ export function Dashboard() {
           {inventory.filter((item) => item.status === "Critical" || item.status === "Low").length > 0 && (
             <button
               onClick={() => {
-                triggerHaptic("success");
+                navigator.vibrate?.([15, 60, 15]);
                 inventory
                   .filter((item) => item.status === "Critical" || item.status === "Low")
                   .forEach((item) => {

@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Card } from "../components/Card";
 import { AlertTriangle, Package, RefreshCw, Plus, ArrowUp, ArrowDown, Minus, Loader2 } from "lucide-react";
 import { Button as NeonButton } from "../components/ui/neon-button";
-import { triggerHaptic } from "../utils/haptics";
 import { toast } from "sonner";
 import { useCafeStore } from "../utils/store";
 
@@ -31,23 +30,23 @@ export function Inventory() {
 
   const handleSync = () => {
     setIsSyncing(true);
-    triggerHaptic("medium");
+    navigator.vibrate?.(22);
     setTimeout(() => {
       setIsSyncing(false);
-      triggerHaptic("success");
+      navigator.vibrate?.([15, 60, 15]);
       toast.success("Inventory synchronized with local warehouse!");
     }, 1100);
   };
 
   const handlePurchaseOrder = () => {
-    triggerHaptic("medium");
+    navigator.vibrate?.(22);
     toast.success("Purchase order created", {
       description: "Draft purchase order sent to supplier for approval."
     });
   };
 
   const handleReorder = (id: string, name: string) => {
-    triggerHaptic("light");
+    navigator.vibrate?.(12);
     // Restock with 10 units dynamically
     restockInventory(id, 10);
     toast.success(`Replenished 10 units of ${name}!`, {

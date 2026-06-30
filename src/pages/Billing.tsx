@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Card } from "../components/Card";
 import { Download, FileText, CreditCard, Banknote, Smartphone, Loader2, Send } from "lucide-react";
 import { Button as NeonButton } from "../components/ui/neon-button";
-import { triggerHaptic } from "../utils/haptics";
 import { toast } from "sonner";
 import { sendTelegramNotification, useCafeStore } from "../utils/store";
 import { supabase } from "../utils/supabase";
@@ -47,7 +46,7 @@ export function Billing() {
 
   const handleSaveTelegram = (e: React.FormEvent) => {
     e.preventDefault();
-    triggerHaptic("medium");
+    navigator.vibrate?.(22);
     localStorage.setItem("cardamom_tg_token", tgToken);
     localStorage.setItem("cardamom_tg_chat_id", tgChatId);
 
@@ -81,12 +80,12 @@ export function Billing() {
 
   const handleTestTelegram = async () => {
     if (!tgToken || !tgChatId) {
-      triggerHaptic("error");
+      navigator.vibrate?.([60, 120, 60]);
       toast.error("Please enter both Bot Token and Chat ID first.");
       return;
     }
     setIsTesting(true);
-    triggerHaptic("medium");
+    navigator.vibrate?.(22);
 
     // Temporarily persist to allow direct testing
     localStorage.setItem("cardamom_tg_token", tgToken);
@@ -107,12 +106,12 @@ export function Billing() {
 
     setIsTesting(false);
     if (success) {
-      triggerHaptic("success");
+      navigator.vibrate?.([15, 60, 15]);
       toast.success("Telegram test message sent successfully!", {
         description: "Check your Telegram chat / group channel."
       });
     } else {
-      triggerHaptic("error");
+      navigator.vibrate?.([60, 120, 60]);
       toast.error("Failed to send test alert.", {
         description: "Please check your Bot Token and Chat ID configurations."
       });
@@ -120,24 +119,24 @@ export function Billing() {
   };
 
   const handleExport = () => {
-    triggerHaptic("medium");
+    navigator.vibrate?.(22);
     toast.success("Transactions exported as CSV successfully!");
   };
 
   const handleGenerateInvoice = (e: React.FormEvent) => {
     e.preventDefault();
     if (!subtotal || subtotal <= 0) {
-      triggerHaptic("error");
+      navigator.vibrate?.([60, 120, 60]);
       toast.error("Please enter a valid amount first");
       return;
     }
     
     setIsGenerating(true);
-    triggerHaptic("medium");
+    navigator.vibrate?.(22);
     
     setTimeout(() => {
       setIsGenerating(false);
-      triggerHaptic("success");
+      navigator.vibrate?.([15, 60, 15]);
       toast.success(`Invoice generated for ${customerName || "Table"} · ₹${total.toLocaleString("en-IN")}`, {
         description: "Sent directly to Cardamom thermal printer",
       });
