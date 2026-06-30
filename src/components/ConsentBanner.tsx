@@ -31,13 +31,13 @@ export function ConsentBanner() {
           <p>
             We use cookies and collect personal data to improve your experience and process orders. 
             By continuing to use our site, you consent to our data practices as described in our{' '}
-            <Link to="/privacy-policy" className="text-blue-600 hover:underline">
+            <a href="/privacy-policy" className="text-blue-600 hover:underline">
               Privacy Policy
-            </Link>
+            </a>
             . You can manage your data via our{' '}
-            <Link to="/data-management" className="text-blue-600 hover:underline">
+            <a href="/data-management" className="text-blue-600 hover:underline">
               Data Management
-            </Link>{' '}
+            </a>{' '}
             page.
           </p>
         </div>

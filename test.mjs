@@ -1,0 +1,11 @@
+import puppeteer from 'puppeteer-core';
+import { execSync } from 'child_process';
+const executablePath = execSync('mdfind "kMDItemCFBundleIdentifier == \'com.google.Chrome\'"').toString().split('\n')[0] + '/Contents/MacOS/Google Chrome';
+const browser = await puppeteer.launch({ executablePath, headless: "new" });
+const page = await browser.newPage();
+page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+page.on('pageerror', err => console.error('PAGE ERROR:', err));
+await page.goto('http://localhost:5173', { waitUntil: 'networkidle0' });
+const html = await page.evaluate(() => document.body.innerHTML);
+console.log('BODY:', html);
+await browser.close();
