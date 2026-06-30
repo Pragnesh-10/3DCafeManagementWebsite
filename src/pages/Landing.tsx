@@ -24,7 +24,7 @@ export function Landing() {
         </Link>
         <div className="hidden md:flex items-center gap-8 text-sm uppercase tracking-widest text-bark-soft">
           <a href="#roastery" className="hover:text-espresso transition-colors">Roastery</a>
-          <a href="#menu" className="hover:text-espresso transition-colors">Menu</a>
+          <Link to="/order" className="hover:text-espresso transition-colors">Menu</Link>
           <a href="#locations" className="hover:text-espresso transition-colors">Locations</a>
         </div>
         <Link to="/login">
@@ -109,7 +109,7 @@ export function Landing() {
       </section>
 
       {/* Features */}
-      <section className="py-24 bg-sand/30 border-y border-line px-6 md:px-12">
+      <section id="roastery" className="py-24 bg-sand/30 border-y border-line px-6 md:px-12">
         <div className="max-w-[1400px] mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl text-espresso mb-4">The Cardamom Standard</h2>

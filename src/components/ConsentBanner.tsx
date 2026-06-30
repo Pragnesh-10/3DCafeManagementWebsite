@@ -14,6 +14,7 @@ export function ConsentBanner() {
 
   const handleAccept = () => {
     localStorage.setItem('dpdp_consent', 'accepted');
+    document.cookie = "dpdp_consent=accepted; path=/; max-age=31536000; SameSite=Lax";
     setIsVisible(false);
   };
 
